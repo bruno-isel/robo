@@ -55,7 +55,7 @@ public class GUI_TP1 extends JFrame {
 		dados = new DadosGUI_TP1();
 		
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 450, 501);
+		setBounds(100, 100, 450, 580);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -127,6 +127,7 @@ public class GUI_TP1 extends JFrame {
 		JButtton_Esquerda.setForeground(new Color(192, 192, 192));
 		JButtton_Esquerda.setFont(new Font("Times New Roman", Font.PLAIN, 14));
 		JButtton_Esquerda.setBounds(80, 170, 90, 45);
+		JButtton_Esquerda.addActionListener(e -> myPrint("Esquerda, raio: " + textField_Raio.getText().trim() + ", ângulo: " + textField_Angulo.getText().trim()));
 		contentPane.add(JButtton_Esquerda);
 		
 		JButtton_Parar = new JButton("Parar");
@@ -135,6 +136,7 @@ public class GUI_TP1 extends JFrame {
 		JButtton_Parar.setFont(new Font("Times New Roman", Font.PLAIN, 14));
 		JButtton_Parar.setForeground(new Color(192, 192, 192));
 		JButtton_Parar.setBounds(170, 170, 90, 45);
+		JButtton_Parar.addActionListener(e -> myPrint("Parar"));
 		contentPane.add(JButtton_Parar);
 		
 		 JButtton_Direita = new JButton("Esquerda");
@@ -143,19 +145,11 @@ public class GUI_TP1 extends JFrame {
 		JButtton_Direita.setForeground(new Color(192, 192, 192));
 		JButtton_Direita.setFont(new Font("Times New Roman", Font.PLAIN, 14));
 		JButtton_Direita.setBounds(259, 170, 90, 45);
+		JButtton_Direita.addActionListener(e -> myPrint("Direita, raio: " + textField_Raio.getText().trim() + ", ângulo: " + textField_Angulo.getText().trim()));
 		contentPane.add(JButtton_Direita);
 		
 		JButtton_Frente = new JButton("Frente");
-		JButtton_Frente.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				myPrint("Frente " + 10);
-			}
-
-			private void myPrint(String string) {
-				
-				
-			}
-		});
+		JButtton_Frente.addActionListener(e -> myPrint("Frente, distância: " + textField_Distancia.getText().trim()));
 		JButtton_Frente.setOpaque(true);
 		JButtton_Frente.setBackground(new Color(128, 255, 0));
 		JButtton_Frente.setForeground(new Color(192, 192, 192));
@@ -169,10 +163,11 @@ public class GUI_TP1 extends JFrame {
 		JButtton_Retaguarda.setForeground(new Color(192, 192, 192));
 		JButtton_Retaguarda.setFont(new Font("Times New Roman", Font.PLAIN, 14));
 		JButtton_Retaguarda.setBounds(170, 216, 90, 45);
+		JButtton_Retaguarda.addActionListener(e -> myPrint("Retaguarda, distância: " + textField_Distancia.getText().trim()));
 		contentPane.add(JButtton_Retaguarda);
 		
 		scrollPane = new JScrollPane();
-		scrollPane.setBounds(16, 376, 408, 22);
+		scrollPane.setBounds(16, 376, 408, 150);
 		contentPane.add(scrollPane);
 		
 		textArea = new JTextArea();
@@ -188,5 +183,13 @@ public class GUI_TP1 extends JFrame {
 		textField_Distancia.setText(String.valueOf(dados.getDistancia()));
 		chckbxDebug_1.setSelected(dados.isDebug());
 		rdbtnOnoff.setSelected(dados.isOnOff());
+	}
+
+	/** Escreve na consola de debug (só aparece se a checkbox Debug estiver marcada). */
+	private void myPrint(String mensagem) {
+		if (!chckbxDebug_1.isSelected())
+			return;
+		textArea.append(mensagem + "\n");
+		textArea.setCaretPosition(textArea.getDocument().getLength());
 	}
 }
