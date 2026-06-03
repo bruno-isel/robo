@@ -24,17 +24,16 @@ Desenvolvimento de uma interface gráfica em Java Swing para controlar o robot d
 
 ---
 
-## 2. Como Compilar e Executar
+## 3. Como Compilar e Executar
 
 ### Pré-requisitos
 - Java 11 ou superior (`java --version`)
-- Estar dentro da pasta `projeto 1/`
+- Estar dentro da pasta `projeto1/`
 
 ### Compilar
 
 ```bash
-cd "projeto 1"
-mkdir -p out
+cd projeto1
 javac --module-path lib -d out src/module-info.java src/fr_tp1/*.java
 ```
 
@@ -44,42 +43,24 @@ javac --module-path lib -d out src/module-info.java src/fr_tp1/*.java
 java --module-path lib:out -m FR_TP1/fr_tp1.GUI_TP1
 ```
 
-### Testar com o Simulador (sem robot físico)
-
-1. Executar o comando acima — a janela GUI abre
-2. O campo **Robot** já tem o nome pré-preenchido (`Bruno`)
-3. Clicar em **On/Off** — o simulador "liga" e os botões de movimento ativam-se
-4. Marcar a checkbox **Debug** para ver os comandos na consola da GUI
-5. Clicar em qualquer botão de movimento (Frente, Esquerda, etc.)
-6. **No terminal** onde a aplicação foi lançada aparece o output do simulador:
-
-```
-[SIMULADOR] Ligado ao robot: Bruno
-[SIMULADOR] Posição inicial: (0.00, 0.00) rumo: 0.00°
-[SIMULADOR] Reta 50 cm  →  pos: (50.00, 0.00)  rumo: 0.00°
-[SIMULADOR] Curvar esquerda raio=20.00 ângulo=50°  →  pos: (65.32, 14.70)  rumo: 50.00°
-```
-
 ### Usar com o Robot Real (quando Bluetooth disponível)
 
 Em `GUI_TP1.java`, substituir a linha do campo `robot`:
 
 ```java
-// Antes (simulador):
+// Simulador (por defeito):
 private IRobot robot = new SimuladorRobot();
 
-// Depois (robot real):
+// Robot real:
 private IRobot robot = new myRobotLego();
 ```
 
-Recompilar e executar. Escrever o nome Bluetooth do robot no campo **Robot** e clicar **On/Off**.
-
 ---
 
-## 3. Estrutura de Ficheiros
+## 4. Estrutura de Ficheiros
 
 ```
-projeto 1/
+projeto1/
 ├── lib/
 │   ├── RobotLegoEV32026.jar          # biblioteca high-level do EV3
 │   ├── InterpretadorEV32026.jar      # API low-level de motores/sensores
@@ -96,78 +77,82 @@ projeto 1/
 
 ---
 
-## 4. Descrição das Classes
+## 5. Descrição das Classes
 
-### 4.1 `IRobot` — Interface Comum
+### 5.1 `IRobot` — Interface Comum
 
 Define o contrato que tanto o simulador como o robot real implementam:
 
 ```java
 boolean ligar(String nome);
 void desligar();
-void reta(int distancia);
-void curvarEsquerda(double raio, int angulo);
-void curvarDireita(double raio, int angulo);
+void reta(double distancia);
+void recuar(double distancia);
+void curvarEsquerda(double raio, double angulo);
+void curvarDireita(double raio, double angulo);
 void parar(boolean travar);
 void setVelocidade(int vel);
 boolean isLigado();
 ```
 
-Esta interface permite trocar o simulador pelo robot real sem alterar a GUI — basta mudar a instância do campo `robot`.
+Esta interface permite trocar o simulador pelo robot real sem alterar a GUI — basta mudar a instância do campo `robot` em `GUI_TP1.java`.
 
 ---
 
-### 4.2 `DadosGUI_TP1` — Modelo de Dados
+### 5.2 `DadosGUI_TP1` — Modelo de Dados
 
 Classe de dados (POJO) que guarda os valores iniciais dos campos da GUI:
 
 | Campo | Tipo | Valor inicial | Descrição |
 |-------|------|--------------|-----------|
 | `robotName` | `String` | `"Bruno"` | Nome Bluetooth do robot |
-| `raio` | `int` | `20` | Raio de curvatura (cm) |
-| `angulo` | `int` | `50` | Ângulo de curvatura (graus) |
-| `distancia` | `int` | `50` | Distância em linha reta (cm) |
+| `raio` | `double` | `20.0` | Raio de curvatura (cm) |
+| `angulo` | `double` | `50.0` | Ângulo de curvatura (graus) |
+| `distancia` | `double` | `50.0` | Distância em linha reta (cm) |
 | `debug` | `boolean` | `true` | Estado inicial da checkbox Debug |
 | `onOff` | `boolean` | `false` | Estado inicial do botão On/Off |
 
 ---
 
-### 4.3 `SimuladorRobot` — Simulador de Terminal
+### 5.3 `SimuladorRobot` — Simulador de Terminal
 
-Implementa `IRobot` simulando os movimentos no terminal. Mantém um estado cinemático interno com posição `(x, y)` e `rumo` (orientação em graus, 0°=Este, 90°=Norte).
+Implementa `IRobot` simulando os movimentos no terminal. Mantém um estado cinemático interno com posição `(Xi, Yi)` e orientação `φ`, seguindo o sistema de coordenadas dos slides do professor:
+
+- **Xi**: eixo vertical (para cima) — direção inicial do robot (φ=0°)
+- **Yi**: eixo horizontal (para a esquerda)
+- **φ positivo**: robot virou para a esquerda (sentido anti-horário)
+- **φ negativo**: robot virou para a direita (sentido horário)
 
 #### Cinemática implementada
 
-**Reta** — desloca o robot na direção do rumo atual:
+**straight(d)** — desloca o robot na direção do rumo atual:
 
 ```
-x += distancia × cos(rumo)
-y += distancia × sin(rumo)
+Xi += d × cos(φ)
+Yi += d × sin(φ)
 ```
 
-**Curva à esquerda** (arco counter-clockwise, raio `r`, ângulo `α`):  
-O centro do arco fica perpendicular à esquerda. A posição final resulta da rotação em torno desse centro:
+**curveLeft(r, α)** — arco anti-horário, centro à esquerda do robot:
 
 ```
-x += r × (sin(θ + α) − sin(θ))
-y += r × (cos(θ) − cos(θ + α))
-rumo += α
+Xi += r × (sin(φ + α) − sin(φ))
+Yi += r × (cos(φ) − cos(φ + α))
+φ  += α
 ```
 
-**Curva à direita** (arco clockwise, raio `r`, ângulo `α`):  
-Centro à direita do robot:
+**curveRight(r, α)** — arco horário, centro à direita do robot:
 
 ```
-x += r × (sin(θ) − sin(θ − α))
-y += r × (cos(θ − α) − cos(θ))
-rumo -= α
+Xi += r × (sin(φ) − sin(φ − α))
+Yi += r × (cos(φ − α) − cos(φ))
+φ  -= α
 ```
 
-Cada operação imprime no terminal (`System.out`) a nova posição e rumo.
+O ângulo φ é normalizado para o intervalo (−180°, 180°] após cada movimento.
 
 ---
 
-### 4.4 `myRobotLego` — Robot Real
+### 5.4 `myRobotLego` — Robot Real
 
 Implementa `IRobot` usando `InterpretadorEV3`. Controla os motores B (esquerdo) e C (direito) do EV3.
 
@@ -204,17 +189,21 @@ vel_exterior = velocidade_base
 vel_interior = velocidade_base × (raio_interior / raio_exterior)
 ```
 
-Se `vel_interior < 0` (curva muito fechada), a roda interior usa `OnRev`. Para curva à direita os motores B e C trocam de papel.
+Se `vel_interior < 0` (curva muito fechada), a roda interior usa `OnRev`. Para curva à direita, os motores B e C trocam de papel.
 
 ---
 
-### 4.5 `GUI_TP1` — Interface Gráfica
+### 5.5 `GUI_TP1` — Interface Gráfica
 
-Janela principal criada com o editor WindowBuilder do Eclipse. Usa **null layout** (posicionamento absoluto). Componentes principais:
+Janela principal criada com o editor WindowBuilder do Eclipse. Usa **null layout** (posicionamento absoluto).
+
+![Interface Gráfica](prints/gui.png)
+
+Componentes principais:
 
 | Componente | Tipo Swing | Função |
 |-----------|-----------|--------|
-| `textField_Robot` | `JTextField` | Nome do robot |
+| `textField_Robot` | `JTextField` | Nome Bluetooth do robot |
 | `rdbtnOnoff` | `JRadioButton` | Liga/desliga comunicação |
 | `textField_Raio` | `JTextField` | Raio de curvatura (cm) |
 | `textField_Angulo` | `JTextField` | Ângulo de curvatura (°) |
@@ -224,24 +213,19 @@ Janela principal criada com o editor WindowBuilder do Eclipse. Usa **null layout
 | `JButtton_Esquerda` | `JButton` (azul) | Curva à esquerda |
 | `JButtton_Direita` | `JButton` (amarelo) | Curva à direita |
 | `JButtton_Parar` | `JButton` (vermelho) | Parar o robot |
-| `chckbxDebug_1` | `JCheckBox` | Ativa mensagens na consola |
+| `chckbxDebug_1` | `JCheckBox` | Ativa mensagens na consola da GUI |
 | `textArea` | `JTextArea` | Consola de log |
 
 #### Gestão de threads — SwingWorker
 
-Os comandos do robot (que bloqueiam em `Thread.sleep`) correm em `SwingWorker` para não congelar a EDT do Swing:
+Os comandos do robot correm em `SwingWorker` para não congelar a EDT do Swing. Os botões de movimento são desativados durante a execução e reativados no final:
 
 ```java
 private void executarComando(Runnable cmd) {
-    setBotoesMovimento(false);           // desativa botões durante execução
+    setBotoesMovimento(false);
     new SwingWorker<Void, Void>() {
-        @Override protected Void doInBackground() {
-            cmd.run();                   // corre no thread worker
-            return null;
-        }
-        @Override protected void done() {
-            setBotoesMovimento(true);    // reativa botões na EDT
-        }
+        @Override protected Void doInBackground() { cmd.run(); return null; }
+        @Override protected void done()           { setBotoesMovimento(true); }
     }.execute();
 }
 ```
@@ -253,13 +237,13 @@ private void executarComando(Runnable cmd) {
 
 ---
 
-## 5. Diagrama de Arquitectura
+## 6. Diagrama de Arquitectura
 
 ```
 ┌─────────────────────────────────────────┐
 │              GUI_TP1 (JFrame)           │
 │                                         │
-│  [Robot: Bruno]      [○ On/Off]         │
+│  [Robot: Bruno]      [● On/Off]         │
 │  [Raio: 20] [Ângulo: 50] [Distância:50] │
 │                                         │
 │         [  Frente  ]                    │
@@ -269,7 +253,6 @@ private void executarComando(Runnable cmd) {
 │  [✓ Debug]         Consola              │
 │  ┌─────────────────────────────────┐    │
 │  │ Ligado a: Bruno                 │    │
-│  │ Frente  distância=50 cm         │    │
 │  └─────────────────────────────────┘    │
 └────────────────┬────────────────────────┘
                  │ IRobot
@@ -284,51 +267,60 @@ private void executarComando(Runnable cmd) {
 
 ---
 
-## 6. Validação com as Trajetórias do Professor
+## 7. Validação com as Trajetórias do Professor
 
-O simulador foi validado com os três exemplos de trajetórias apresentados nos slides da disciplina.
+O simulador foi validado com os três exemplos de trajetórias apresentados nos slides da disciplina. O sistema de coordenadas usado (Xi cima, Yi esquerda, φ medido a partir de Xi) é o mesmo dos slides.
 
 ### Trajetória 1 — ponto (70, 40, φ=70°)
 
-```
-[SIMULADOR] Ligado ao robot: Bruno
-[SIMULADOR] Posição inicial: Xi=0.00  Yi=0.00  φ=0.00°  (a apontar para Xi)
-[SIMULADOR] curveLeft(23.75, 27.08)  →  Xi=12.16  Yi=10.81  φ=27.08°
-[SIMULADOR] straight(53.55)          →  Xi=59.75  Yi=35.19  φ=27.08°
-[SIMULADOR] curveLeft(23.75, 42.92)  →  Xi=70.00  Yi=40.00  φ=70.00°
-```
+| Passo | Raio | Ângulo | Distância | Botão |
+|-------|------|--------|-----------|-------|
+| 1 | 23.75 | 27.08 | — | Esquerda |
+| 2 | — | — | 53.55 | Frente |
+| 3 | 23.75 | 42.92 | — | Esquerda |
+
+![Trajetória 1](prints/trajetoria1.png)
+
 ✓ Resultado: **Xi=70.00  Yi=40.00  φ=70.00°**
-
-### Trajetória 2 — ponto (70, 40, φ=20°)
-
-```
-[SIMULADOR] Ligado ao robot: Bruno
-[SIMULADOR] Posição inicial: Xi=0.00  Yi=0.00  φ=0.00°  (a apontar para Xi)
-[SIMULADOR] curveLeft(56.95, 51.78)  →  Xi=44.74  Yi=21.72  φ=51.78°
-[SIMULADOR] curveRight(56.95, 31.78) →  Xi=70.01  Yi=40.00  φ=20.00°
-```
-✓ Resultado: **Xi=70.01  Yi=40.00  φ=20.00°** (erro de 0.01 cm por arredondamento dos parâmetros)
-
-### Trajetória 3 — ponto (50, 40, φ=−40°)
-
-```
-[SIMULADOR] Ligado ao robot: Bruno
-[SIMULADOR] Posição inicial: Xi=0.00  Yi=0.00  φ=0.00°  (a apontar para Xi)
-[SIMULADOR] curveLeft(17.82, 76.98)   →  Xi=17.36  Yi=13.81  φ=76.98°
-[SIMULADOR] straight(16.98)           →  Xi=21.19  Yi=30.35  φ=76.98°
-[SIMULADOR] curveRight(17.82, 116.98) →  Xi=50.00  Yi=39.99  φ=-40.00°
-```
-✓ Resultado: **Xi=50.00  Yi=39.99  φ=−40.00°** (erro de 0.01 cm por arredondamento dos parâmetros)
-
-Os pequenos desvios (≤ 0.01 cm) devem-se ao arredondamento dos parâmetros apresentados nos slides, sendo negligenciáveis em contexto real onde os erros do hardware (deslizamento das rodas, piso irregular) são significativamente maiores.
 
 ---
 
-## 7. Conclusão
+### Trajetória 2 — ponto (70, 40, φ=20°)
+
+| Passo | Raio | Ângulo | Distância | Botão |
+|-------|------|--------|-----------|-------|
+| 1 | 56.95 | 51.78 | — | Esquerda |
+| 2 | 56.95 | 31.78 | — | Direita |
+
+![Trajetória 2](prints/trajetoria2.png)
+
+✓ Resultado: **Xi=70.01  Yi=40.00  φ=20.00°** (desvio de 0.01 cm por arredondamento dos parâmetros)
+
+---
+
+### Trajetória 3 — ponto (50, 40, φ=−40°)
+
+| Passo | Raio | Ângulo | Distância | Botão |
+|-------|------|--------|-----------|-------|
+| 1 | 17.82 | 76.98 | — | Esquerda |
+| 2 | — | — | 16.98 | Frente |
+| 3 | 17.82 | 116.98 | — | Direita |
+
+![Trajetória 3](prints/trajetoria3.png)
+
+✓ Resultado: **Xi=50.00  Yi=39.99  φ=−40.00°** (desvio de 0.01 cm por arredondamento dos parâmetros)
+
+---
+
+Os pequenos desvios (≤ 0.01 cm) devem-se ao arredondamento dos parâmetros apresentados nos slides. Em contexto real, os erros do hardware (deslizamento das rodas, irregularidades do piso) são significativamente maiores, pelo que estes desvios são negligenciáveis.
+
+---
+
+## 8. Conclusão
 
 O trabalho prático foi concluído com sucesso, cumprindo os dois objetivos definidos no enunciado.
 
-Na **Parte 1**, foi desenvolvida uma interface gráfica em Java Swing com todos os elementos requeridos: campos para o nome do robot, raio, ângulo e distância; cinco botões de movimento (Frente, Retaguarda, Esquerda, Direita, Parar); botão On/Off para gerir a ligação Bluetooth; checkbox de Debug; e consola de log em tempo real. A GUI foi implementada com `SwingWorker` para garantir que as operações do robot não bloqueiam a EDT (Event Dispatch Thread), mantendo a interface responsiva durante a execução dos comandos.
+Na **Parte 1**, foi desenvolvida uma interface gráfica em Java Swing com todos os elementos requeridos: campos para o nome do robot, raio, ângulo e distância; cinco botões de movimento (Frente, Retaguarda, Esquerda, Direita, Parar); botão On/Off para gerir a ligação Bluetooth; checkbox de Debug; e consola de log em tempo real. A GUI foi implementada com `SwingWorker` para garantir que as operações do robot não bloqueiam a EDT, mantendo a interface responsiva durante a execução dos comandos.
 
 Para permitir o desenvolvimento e teste sem acesso ao robot físico, foi criado um **simulador de terminal** (`SimuladorRobot`) que reproduz fielmente a cinemática do robot, usando o sistema de coordenadas do professor (Xi, Yi, φ). O simulador foi validado com as três trajetórias de referência dos slides, obtendo resultados coincidentes com os valores teóricos.
 
