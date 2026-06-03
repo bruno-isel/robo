@@ -58,7 +58,7 @@ public class SimuladorRobot implements IRobot {
         // Centro do arco à esquerda do robot
         x += raio * (Math.sin(θ + α) - Math.sin(θ));
         y += raio * (Math.cos(θ) - Math.cos(θ + α));
-        rumo += angulo;
+        rumo = normalizarRumo(rumo + angulo);
         log("Curvar esquerda raio=" + fmt(raio) + " ângulo=" + angulo + "°  →  pos: (" + fmt(x) + ", " + fmt(y) + ")  rumo: " + fmt(rumo) + "°");
     }
 
@@ -70,7 +70,7 @@ public class SimuladorRobot implements IRobot {
         // Centro do arco à direita do robot
         x += raio * (Math.sin(θ) - Math.sin(θ - α));
         y += raio * (Math.cos(θ - α) - Math.cos(θ));
-        rumo -= angulo;
+        rumo = normalizarRumo(rumo - angulo);
         log("Curvar direita  raio=" + fmt(raio) + " ângulo=" + angulo + "°  →  pos: (" + fmt(x) + ", " + fmt(y) + ")  rumo: " + fmt(rumo) + "°");
     }
 
@@ -97,6 +97,10 @@ public class SimuladorRobot implements IRobot {
             return false;
         }
         return true;
+    }
+
+    private static double normalizarRumo(double r) {
+        return ((r % 360) + 360) % 360;
     }
 
     private static String fmt(double v) {
