@@ -49,48 +49,46 @@ public class myRobotLego implements IRobot {
     }
 
     @Override
-    public void reta(int distancia) {
+    public void reta(double distancia) {
         if (!verificar()) return;
         long ms = tempoMs(distancia, velocidade);
-        System.out.println("[EV3] Reta " + distancia + " cm (" + ms + " ms)");
+        System.out.println("[EV3] straight(" + distancia + ") → " + ms + " ms");
         ev3.OnFwd(InterpretadorEV3.OUT_BC, velocidade);
         dormir(ms);
         ev3.Off(InterpretadorEV3.OUT_BC);
     }
 
     @Override
-    public void recuar(int distancia) {
+    public void recuar(double distancia) {
         if (!verificar()) return;
         long ms = tempoMs(distancia, velocidade);
-        System.out.println("[EV3] Recuar " + distancia + " cm (" + ms + " ms)");
+        System.out.println("[EV3] Recuar(" + distancia + ") → " + ms + " ms");
         ev3.OnRev(InterpretadorEV3.OUT_BC, velocidade);
         dormir(ms);
         ev3.Off(InterpretadorEV3.OUT_BC);
     }
 
     @Override
-    public void curvarEsquerda(double raio, int angulo) {
+    public void curvarEsquerda(double raio, double angulo) {
         if (!verificar()) return;
         double raioExt = raio + DBW / 2;
         double raioInt = raio - DBW / 2;
         int velExt = velocidade;
         int velInt = (int) Math.round(velocidade * raioInt / raioExt);
         long ms = tempoMs(raioExt * Math.toRadians(angulo), velExt);
-        System.out.println("[EV3] Curvar esquerda raio=" + raio + " ângulo=" + angulo + "° (" + ms + " ms)");
-        // Esquerda: roda direita (C) é exterior, roda esquerda (B) é interior
+        System.out.println("[EV3] curveLeft(" + raio + ", " + angulo + ") → " + ms + " ms");
         acionarCurva(InterpretadorEV3.OUT_C, velExt, InterpretadorEV3.OUT_B, velInt, ms);
     }
 
     @Override
-    public void curvarDireita(double raio, int angulo) {
+    public void curvarDireita(double raio, double angulo) {
         if (!verificar()) return;
         double raioExt = raio + DBW / 2;
         double raioInt = raio - DBW / 2;
         int velExt = velocidade;
         int velInt = (int) Math.round(velocidade * raioInt / raioExt);
         long ms = tempoMs(raioExt * Math.toRadians(angulo), velExt);
-        System.out.println("[EV3] Curvar direita raio=" + raio + " ângulo=" + angulo + "° (" + ms + " ms)");
-        // Direita: roda esquerda (B) é exterior, roda direita (C) é interior
+        System.out.println("[EV3] curveRight(" + raio + ", " + angulo + ") → " + ms + " ms");
         acionarCurva(InterpretadorEV3.OUT_B, velExt, InterpretadorEV3.OUT_C, velInt, ms);
     }
 

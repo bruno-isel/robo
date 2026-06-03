@@ -118,8 +118,8 @@ public class GUI_TP1 extends JFrame {
 		JButtton_Esquerda.setFont(new Font("Times New Roman", Font.PLAIN, 14));
 		JButtton_Esquerda.setBounds(80, 170, 90, 45);
 		JButtton_Esquerda.addActionListener(e -> executarComando(() -> {
-			double raio = parseCampoDouble(textField_Raio, dados.getRaio());
-			int angulo  = parseCampo(textField_Angulo, dados.getAngulo());
+			double raio   = parseCampoDouble(textField_Raio, dados.getRaio());
+			double angulo = parseCampoDouble(textField_Angulo, dados.getAngulo());
 			robot.curvarEsquerda(raio, angulo);
 			myPrint("Esquerda  raio=" + raio + " ângulo=" + angulo + "°");
 		}));
@@ -144,8 +144,8 @@ public class GUI_TP1 extends JFrame {
 		JButtton_Direita.setFont(new Font("Times New Roman", Font.PLAIN, 14));
 		JButtton_Direita.setBounds(259, 170, 90, 45);
 		JButtton_Direita.addActionListener(e -> executarComando(() -> {
-			double raio = parseCampoDouble(textField_Raio, dados.getRaio());
-			int angulo  = parseCampo(textField_Angulo, dados.getAngulo());
+			double raio   = parseCampoDouble(textField_Raio, dados.getRaio());
+			double angulo = parseCampoDouble(textField_Angulo, dados.getAngulo());
 			robot.curvarDireita(raio, angulo);
 			myPrint("Direita  raio=" + raio + " ângulo=" + angulo + "°");
 		}));
@@ -158,7 +158,7 @@ public class GUI_TP1 extends JFrame {
 		JButtton_Frente.setFont(new Font("Times New Roman", Font.PLAIN, 14));
 		JButtton_Frente.setBounds(170, 126, 90, 45);
 		JButtton_Frente.addActionListener(e -> executarComando(() -> {
-			int dist = parseCampo(textField_Distancia, dados.getDistancia());
+			double dist = parseCampoDouble(textField_Distancia, dados.getDistancia());
 			robot.reta(dist);
 			myPrint("Frente  distância=" + dist + " cm");
 		}));
@@ -171,7 +171,7 @@ public class GUI_TP1 extends JFrame {
 		JButtton_Retaguarda.setFont(new Font("Times New Roman", Font.PLAIN, 14));
 		JButtton_Retaguarda.setBounds(170, 216, 90, 45);
 		JButtton_Retaguarda.addActionListener(e -> executarComando(() -> {
-			int dist = parseCampo(textField_Distancia, dados.getDistancia());
+			double dist = parseCampoDouble(textField_Distancia, dados.getDistancia());
 			robot.recuar(dist);
 			myPrint("Retaguarda  distância=" + dist + " cm");
 		}));
@@ -261,11 +261,6 @@ public class GUI_TP1 extends JFrame {
 	private void myPrintSempre(String msg) {
 		textArea.append(msg + "\n");
 		textArea.setCaretPosition(textArea.getDocument().getLength());
-	}
-
-	private int parseCampo(JTextField campo, int valorPadrao) {
-		try { return Integer.parseInt(campo.getText().trim()); }
-		catch (NumberFormatException e) { return valorPadrao; }
 	}
 
 	private double parseCampoDouble(JTextField campo, double valorPadrao) {

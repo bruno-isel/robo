@@ -39,38 +39,36 @@ public class SimuladorRobot implements IRobot {
     }
 
     @Override
-    public void reta(int distancia) {
+    public void reta(double distancia) {
         if (!verificar()) return;
         double rad = Math.toRadians(phi);
         xi += distancia * Math.cos(rad);
         yi += distancia * Math.sin(rad);
-        log("straight(" + distancia + ")  →  " + pos());
+        log("straight(" + fmt(distancia) + ")  →  " + pos());
     }
 
     @Override
-    public void recuar(int distancia) {
+    public void recuar(double distancia) {
         if (!verificar()) return;
         double rad = Math.toRadians(phi);
         xi -= distancia * Math.cos(rad);
         yi -= distancia * Math.sin(rad);
-        log("Recuar(" + distancia + ")   →  " + pos());
+        log("Recuar(" + fmt(distancia) + ")   →  " + pos());
     }
 
     @Override
-    public void curvarEsquerda(double raio, int angulo) {
+    public void curvarEsquerda(double raio, double angulo) {
         if (!verificar()) return;
         double θ = Math.toRadians(phi);
         double α = Math.toRadians(angulo);
-        // Centro do arco: perpendicular à esquerda do robot
-        // c = (xi - r*sin(θ), yi + r*cos(θ))
         xi += raio * (Math.sin(θ + α) - Math.sin(θ));
         yi += raio * (Math.cos(θ) - Math.cos(θ + α));
         phi = normalizarPhi(phi + angulo);
-        log("curveLeft(" + fmt(raio) + ", " + angulo + ")  →  " + pos());
+        log("curveLeft(" + fmt(raio) + ", " + fmt(angulo) + ")  →  " + pos());
     }
 
     @Override
-    public void curvarDireita(double raio, int angulo) {
+    public void curvarDireita(double raio, double angulo) {
         if (!verificar()) return;
         double θ = Math.toRadians(phi);
         double α = Math.toRadians(angulo);
@@ -79,7 +77,7 @@ public class SimuladorRobot implements IRobot {
         xi += raio * (Math.sin(θ) - Math.sin(θ - α));
         yi += raio * (Math.cos(θ - α) - Math.cos(θ));
         phi = normalizarPhi(phi - angulo);
-        log("curveRight(" + fmt(raio) + ", " + angulo + ")  →  " + pos());
+        log("curveRight(" + fmt(raio) + ", " + fmt(angulo) + ")  →  " + pos());
     }
 
     @Override
