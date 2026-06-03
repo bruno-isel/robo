@@ -1,0 +1,19 @@
+# Eclipse / VSCode / IDE
+.project
+.classpath
+.settings/
+.vscode/
+.idea/
+
+# Build / output directories
+bin/
+target/
+out/
+
+# OS-specific
+.DS_Store
+
+# Logs / temp
+*.log
+tmp/
+
