@@ -17,3 +17,6 @@ out/
 *.log
 tmp/
 
+# Large files
+artefactos/
+
