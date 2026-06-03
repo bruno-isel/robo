@@ -109,9 +109,10 @@ public class SimuladorRobot implements IRobot {
         return true;
     }
 
-    // Normaliza φ para [0°, 360°)
+    // Normaliza φ para (-180°, 180°] — igual à convenção dos slides do professor
     private static double normalizarPhi(double p) {
-        return ((p % 360) + 360) % 360;
+        p = ((p % 360) + 360) % 360; // primeiro para [0°, 360°)
+        return p > 180 ? p - 360 : p; // depois para (-180°, 180°]
     }
 
     private static String fmt(double v) {
