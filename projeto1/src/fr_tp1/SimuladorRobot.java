@@ -2,8 +2,14 @@ package fr_tp1;
 
 /**
  * Simulador de terminal do robot EV3.
- * Rastreia a posição e rumo do robot e imprime cada ação no terminal.
- * Usa coordenadas cartesianas (x=Este, y=Norte) e rumo em graus (0=Este, 90=Norte).
+ *
+ * Sistema de coordenadas (conforme slides do professor):
+ *   - Xi: eixo vertical (para cima) — direção inicial do robot
+ *   - Yi: eixo horizontal (para a esquerda)
+ *   - φ=0°  → robot aponta para Xi (cima)
+ *   - φ=90° → robot aponta para Yi (esquerda)
+ *   - curveLeft  → φ aumenta (anti-horário)
+ *   - curveRight → φ diminui (horário)
  */
 public class SimuladorRobot implements IRobot {
 
@@ -11,18 +17,18 @@ public class SimuladorRobot implements IRobot {
     private String nome = "";
     private int velocidade = 40;
 
-    // Estado cinemático do robot
-    private double x = 0.0;
-    private double y = 0.0;
-    private double rumo = 0.0; // graus, 0=Este, 90=Norte
+    // Estado cinemático — coordenadas do professor (Xi, Yi, φ)
+    private double xi = 0.0;
+    private double yi = 0.0;
+    private double phi = 0.0; // graus: 0=Xi(cima), 90=Yi(esquerda)
 
     @Override
     public boolean ligar(String nome) {
         this.nome = nome;
         this.ligado = true;
-        x = 0; y = 0; rumo = 0;
+        xi = 0; yi = 0; phi = 0;
         log("Ligado ao robot: " + nome);
-        log("Posição inicial: (0.00, 0.00) rumo: 0.00°");
+        log("Posição inicial: Xi=0.00  Yi=0.00  φ=0.00°  (a apontar para Xi)");
         return true;
     }
 
@@ -35,49 +41,51 @@ public class SimuladorRobot implements IRobot {
     @Override
     public void reta(int distancia) {
         if (!verificar()) return;
-        double rad = Math.toRadians(rumo);
-        x += distancia * Math.cos(rad);
-        y += distancia * Math.sin(rad);
-        log("Reta " + distancia + " cm  →  pos: (" + fmt(x) + ", " + fmt(y) + ")  rumo: " + fmt(rumo) + "°");
+        double rad = Math.toRadians(phi);
+        xi += distancia * Math.cos(rad);
+        yi += distancia * Math.sin(rad);
+        log("straight(" + distancia + ")  →  " + pos());
     }
 
     @Override
     public void recuar(int distancia) {
         if (!verificar()) return;
-        double rad = Math.toRadians(rumo);
-        x -= distancia * Math.cos(rad);
-        y -= distancia * Math.sin(rad);
-        log("Recuar " + distancia + " cm  →  pos: (" + fmt(x) + ", " + fmt(y) + ")  rumo: " + fmt(rumo) + "°");
+        double rad = Math.toRadians(phi);
+        xi -= distancia * Math.cos(rad);
+        yi -= distancia * Math.sin(rad);
+        log("Recuar(" + distancia + ")   →  " + pos());
     }
 
     @Override
     public void curvarEsquerda(double raio, int angulo) {
         if (!verificar()) return;
-        double θ = Math.toRadians(rumo);
+        double θ = Math.toRadians(phi);
         double α = Math.toRadians(angulo);
-        // Centro do arco à esquerda do robot
-        x += raio * (Math.sin(θ + α) - Math.sin(θ));
-        y += raio * (Math.cos(θ) - Math.cos(θ + α));
-        rumo = normalizarRumo(rumo + angulo);
-        log("Curvar esquerda raio=" + fmt(raio) + " ângulo=" + angulo + "°  →  pos: (" + fmt(x) + ", " + fmt(y) + ")  rumo: " + fmt(rumo) + "°");
+        // Centro do arco: perpendicular à esquerda do robot
+        // c = (xi - r*sin(θ), yi + r*cos(θ))
+        xi += raio * (Math.sin(θ + α) - Math.sin(θ));
+        yi += raio * (Math.cos(θ) - Math.cos(θ + α));
+        phi = normalizarPhi(phi + angulo);
+        log("curveLeft(" + fmt(raio) + ", " + angulo + ")  →  " + pos());
     }
 
     @Override
     public void curvarDireita(double raio, int angulo) {
         if (!verificar()) return;
-        double θ = Math.toRadians(rumo);
+        double θ = Math.toRadians(phi);
         double α = Math.toRadians(angulo);
-        // Centro do arco à direita do robot
-        x += raio * (Math.sin(θ) - Math.sin(θ - α));
-        y += raio * (Math.cos(θ - α) - Math.cos(θ));
-        rumo = normalizarRumo(rumo - angulo);
-        log("Curvar direita  raio=" + fmt(raio) + " ângulo=" + angulo + "°  →  pos: (" + fmt(x) + ", " + fmt(y) + ")  rumo: " + fmt(rumo) + "°");
+        // Centro do arco: perpendicular à direita do robot
+        // c = (xi + r*sin(θ), yi - r*cos(θ))
+        xi += raio * (Math.sin(θ) - Math.sin(θ - α));
+        yi += raio * (Math.cos(θ - α) - Math.cos(θ));
+        phi = normalizarPhi(phi - angulo);
+        log("curveRight(" + fmt(raio) + ", " + angulo + ")  →  " + pos());
     }
 
     @Override
     public void parar(boolean travar) {
         if (!verificar()) return;
-        log("Parar" + (travar ? " (travagem)" : " (livre)") + "  →  pos: (" + fmt(x) + ", " + fmt(y) + ")");
+        log("Parar" + (travar ? " (travagem)" : " (livre)") + "  →  " + pos());
     }
 
     @Override
@@ -91,6 +99,10 @@ public class SimuladorRobot implements IRobot {
         return ligado;
     }
 
+    private String pos() {
+        return "Xi=" + fmt(xi) + "  Yi=" + fmt(yi) + "  φ=" + fmt(phi) + "°";
+    }
+
     private boolean verificar() {
         if (!ligado) {
             log("[ERRO] Robot não está ligado");
@@ -99,8 +111,9 @@ public class SimuladorRobot implements IRobot {
         return true;
     }
 
-    private static double normalizarRumo(double r) {
-        return ((r % 360) + 360) % 360;
+    // Normaliza φ para [0°, 360°)
+    private static double normalizarPhi(double p) {
+        return ((p % 360) + 360) % 360;
     }
 
     private static String fmt(double v) {
