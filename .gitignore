@@ -17,6 +17,9 @@ out/
 *.log
 tmp/
 
+# Compiled classes
+*.class
+
 # Large files
 artefactos/
 

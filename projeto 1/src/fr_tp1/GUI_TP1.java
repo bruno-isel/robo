@@ -139,7 +139,7 @@ public class GUI_TP1 extends JFrame {
 		JButtton_Parar.addActionListener(e -> myPrint("Parar"));
 		contentPane.add(JButtton_Parar);
 		
-		 JButtton_Direita = new JButton("Esquerda");
+		JButtton_Direita = new JButton("Direita");
 		JButtton_Direita.setOpaque(true);
 		JButtton_Direita.setBackground(new Color(255, 255, 0));
 		JButtton_Direita.setForeground(new Color(192, 192, 192));
