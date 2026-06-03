@@ -237,33 +237,9 @@ private void executarComando(Runnable cmd) {
 
 ---
 
-## 6. Diagrama de Arquitectura
+## 6. Diagrama de Classes
 
-```
-┌─────────────────────────────────────────┐
-│              GUI_TP1 (JFrame)           │
-│                                         │
-│  [Robot: Bruno]      [● On/Off]         │
-│  [Raio: 20] [Ângulo: 50] [Distância:50] │
-│                                         │
-│         [  Frente  ]                    │
-│  [Esquerda] [Parar] [Direita]           │
-│         [Retaguarda]                    │
-│                                         │
-│  [✓ Debug]         Consola              │
-│  ┌─────────────────────────────────┐    │
-│  │ Ligado a: Bruno                 │    │
-│  └─────────────────────────────────┘    │
-└────────────────┬────────────────────────┘
-                 │ IRobot
-        ┌────────┴────────┐
-        │                 │
- SimuladorRobot     myRobotLego
- (terminal)         (InterpretadorEV3)
-                         │
-                   [Motor B] [Motor C]
-                   esquerdo  direito
-```
+![Diagrama de Classes](prints/diagramaClasses.png)
 
 ---
 
