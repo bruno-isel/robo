@@ -15,6 +15,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JTextArea;
 import javax.swing.JScrollPane;
 import javax.swing.SwingWorker;
+import javax.swing.SwingUtilities;
 
 public class GUI_TP1 extends JFrame {
 
@@ -30,8 +31,8 @@ public class GUI_TP1 extends JFrame {
 	JButton JButtton_Esquerda, JButtton_Parar, JButtton_Direita, JButtton_Frente, JButtton_Retaguarda;
 	JTextArea textArea;
 
-	// Usar SimuladorRobot por defeito; trocar por new myRobotLego() para o robot real
-	private IRobot robot = new SimuladorRobot();
+	// Inicializado no construtor após a textArea estar pronta
+	private IRobot robot;
 
 	public static void main(String[] args) {
 		EventQueue.invokeLater(() -> {
@@ -117,12 +118,14 @@ public class GUI_TP1 extends JFrame {
 		JButtton_Esquerda.setForeground(new Color(192, 192, 192));
 		JButtton_Esquerda.setFont(new Font("Times New Roman", Font.PLAIN, 14));
 		JButtton_Esquerda.setBounds(80, 170, 90, 45);
-		JButtton_Esquerda.addActionListener(e -> executarComando(() -> {
+		JButtton_Esquerda.addActionListener(e -> {
 			double raio   = parseCampoDouble(textField_Raio, dados.getRaio());
 			double angulo = parseCampoDouble(textField_Angulo, dados.getAngulo());
-			robot.curvarEsquerda(raio, angulo);
-			myPrint("Esquerda  raio=" + raio + " ângulo=" + angulo + "°");
-		}));
+			executarComando(() -> {
+				robot.curvarEsquerda(raio, angulo);
+				myPrint("Esquerda  raio=" + raio + " ângulo=" + angulo + "°");
+			});
+		});
 		contentPane.add(JButtton_Esquerda);
 
 		JButtton_Parar = new JButton("Parar");
@@ -143,12 +146,14 @@ public class GUI_TP1 extends JFrame {
 		JButtton_Direita.setForeground(new Color(192, 192, 192));
 		JButtton_Direita.setFont(new Font("Times New Roman", Font.PLAIN, 14));
 		JButtton_Direita.setBounds(259, 170, 90, 45);
-		JButtton_Direita.addActionListener(e -> executarComando(() -> {
+		JButtton_Direita.addActionListener(e -> {
 			double raio   = parseCampoDouble(textField_Raio, dados.getRaio());
 			double angulo = parseCampoDouble(textField_Angulo, dados.getAngulo());
-			robot.curvarDireita(raio, angulo);
-			myPrint("Direita  raio=" + raio + " ângulo=" + angulo + "°");
-		}));
+			executarComando(() -> {
+				robot.curvarDireita(raio, angulo);
+				myPrint("Direita  raio=" + raio + " ângulo=" + angulo + "°");
+			});
+		});
 		contentPane.add(JButtton_Direita);
 
 		JButtton_Frente = new JButton("Frente");
@@ -157,11 +162,13 @@ public class GUI_TP1 extends JFrame {
 		JButtton_Frente.setForeground(new Color(192, 192, 192));
 		JButtton_Frente.setFont(new Font("Times New Roman", Font.PLAIN, 14));
 		JButtton_Frente.setBounds(170, 126, 90, 45);
-		JButtton_Frente.addActionListener(e -> executarComando(() -> {
+		JButtton_Frente.addActionListener(e -> {
 			double dist = parseCampoDouble(textField_Distancia, dados.getDistancia());
-			robot.reta(dist);
-			myPrint("Frente  distância=" + dist + " cm");
-		}));
+			executarComando(() -> {
+				robot.reta(dist);
+				myPrint("Frente  distância=" + dist + " cm");
+			});
+		});
 		contentPane.add(JButtton_Frente);
 
 		JButtton_Retaguarda = new JButton("Retaguarda");
@@ -170,11 +177,13 @@ public class GUI_TP1 extends JFrame {
 		JButtton_Retaguarda.setForeground(new Color(192, 192, 192));
 		JButtton_Retaguarda.setFont(new Font("Times New Roman", Font.PLAIN, 14));
 		JButtton_Retaguarda.setBounds(170, 216, 90, 45);
-		JButtton_Retaguarda.addActionListener(e -> executarComando(() -> {
+		JButtton_Retaguarda.addActionListener(e -> {
 			double dist = parseCampoDouble(textField_Distancia, dados.getDistancia());
-			robot.recuar(dist);
-			myPrint("Retaguarda  distância=" + dist + " cm");
-		}));
+			executarComando(() -> {
+				robot.recuar(dist);
+				myPrint("Retaguarda  distância=" + dist + " cm");
+			});
+		});
 		contentPane.add(JButtton_Retaguarda);
 
 		scrollPane = new JScrollPane();
@@ -184,6 +193,10 @@ public class GUI_TP1 extends JFrame {
 		textArea = new JTextArea();
 		textArea.setEditable(false);
 		scrollPane.setViewportView(textArea);
+
+		// Criado aqui para que o consumer possa aceder à textArea já inicializada
+		// Trocar por new myRobotLego() para usar o robot real via Bluetooth
+		robot = new SimuladorRobot(this::myPrintSempre);
 
 		aplicarDadosNoFormulario();
 	}
@@ -257,10 +270,12 @@ public class GUI_TP1 extends JFrame {
 		myPrintSempre(msg);
 	}
 
-	/** Escreve sempre na consola, independentemente do Debug. */
+	/** Escreve sempre na consola, independentemente do Debug. Thread-safe. */
 	private void myPrintSempre(String msg) {
-		textArea.append(msg + "\n");
-		textArea.setCaretPosition(textArea.getDocument().getLength());
+		SwingUtilities.invokeLater(() -> {
+			textArea.append(msg + "\n");
+			textArea.setCaretPosition(textArea.getDocument().getLength());
+		});
 	}
 
 	private double parseCampoDouble(JTextField campo, double valorPadrao) {

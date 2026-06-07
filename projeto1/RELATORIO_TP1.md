@@ -1,3 +1,15 @@
+---
+titulo: "1º Trabalho Prático"
+subtitulo: "GUI de Controlo do Robot Lego EV3"
+disciplina: "Fundamentos de Robótica — MEIM/MEET"
+docente: "Jorge Pais"
+grau: "Mestrado em Engenharia Informática e Multimédia"
+autores:
+  - nome: "Bruno Rodrigues"
+    numero: "52323"
+data: "Junho 2026"
+---
+
 # Relatório — 1º Trabalho Prático  
 **Fundamentos de Robótica** | MEIM/MEET | 2º Sem 2025/2026  
 **Autor:** Bruno Rodrigues  
@@ -11,7 +23,9 @@ A robótica é uma área interdisciplinar que combina mecânica, eletrónica, se
 
 Este trabalho prático tem como objetivo o desenvolvimento de uma aplicação Java para controlar o robot Lego EV3 à distância via Bluetooth. O trabalho divide-se em duas partes complementares: primeiro, o desenvolvimento de uma interface gráfica em Swing que permita ao utilizador enviar comandos de movimento ao robot; segundo, a implementação de uma classe `myRobotLego` que traduz esses comandos de alto nível em instruções diretas para os motores do EV3, recorrendo à biblioteca `InterpretadorEV3.jar`.
 
-Uma vez que a ligação Bluetooth não estava disponível durante o desenvolvimento, foi também implementado um simulador de terminal que replica a cinemática real do robot, permitindo verificar a correção dos movimentos antes de os executar no hardware físico. O simulador segue o sistema de coordenadas definido pelo professor nos slides da disciplina (eixo Xi vertical, eixo Yi horizontal para a esquerda, ângulo φ medido a partir de Xi no sentido anti-horário), e foi validado com os três exemplos de trajetórias apresentados nas aulas.
+O enunciado especifica que a Parte 1 deve ser desenvolvida e testada utilizando a biblioteca `RobotLegoEV32026.jar`. No entanto, o sistema de desenvolvimento utilizado é **macOS**, e a biblioteca Bluetooth `bluecove-2.1.1-SNAPSHOT.jar` — da qual `RobotLegoEV32026.jar` depende para comunicar com o EV3 — **não é compatível com macOS** nas versões recentes do sistema operativo (a BlueCove não tem suporte oficial para o stack Bluetooth nativo do macOS). Por este motivo, não foi possível utilizar a biblioteca diretamente nem estabelecer comunicação Bluetooth com o robot durante o desenvolvimento.
+
+Como alternativa, foi implementado um **simulador de terminal** (`SimuladorRobot`) que implementa a mesma interface (`IRobot`) que o robot real e replica a cinemática real do robot. O simulador apresenta o resultado de cada movimento (posição Xi, Yi e orientação φ) diretamente na consola da GUI, permitindo verificar a correção de toda a lógica antes de executar no hardware físico. O simulador segue o sistema de coordenadas definido pelo professor nos slides da disciplina (eixo Xi vertical, eixo Yi horizontal para a esquerda, ângulo φ medido a partir de Xi no sentido anti-horário), e foi validado com os três exemplos de trajetórias apresentados nas aulas.
 
 ---
 
@@ -116,7 +130,7 @@ Classe de dados (POJO) que guarda os valores iniciais dos campos da GUI:
 
 ### 5.3 `SimuladorRobot` — Simulador de Terminal
 
-Implementa `IRobot` simulando os movimentos no terminal. Mantém um estado cinemático interno com posição `(Xi, Yi)` e orientação `φ`, seguindo o sistema de coordenadas dos slides do professor:
+Implementa `IRobot` simulando os movimentos e reportando o resultado diretamente na **consola da GUI** (não no terminal). Recebe um `Consumer<String>` no construtor — a GUI passa `this::myPrintSempre`, de modo que cada mensagem aparece na `textArea` da janela. Mantém um estado cinemático interno com posição `(Xi, Yi)` e orientação `φ`, seguindo o sistema de coordenadas dos slides do professor:
 
 - **Xi**: eixo vertical (para cima) — direção inicial do robot (φ=0°)
 - **Yi**: eixo horizontal (para a esquerda)

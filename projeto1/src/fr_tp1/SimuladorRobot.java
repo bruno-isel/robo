@@ -1,5 +1,7 @@
 package fr_tp1;
 
+import java.util.function.Consumer;
+
 /**
  * Simulador de terminal do robot EV3.
  *
@@ -13,9 +15,14 @@ package fr_tp1;
  */
 public class SimuladorRobot implements IRobot {
 
+    private final Consumer<String> logger;
     private boolean ligado = false;
     private String nome = "";
     private int velocidade = 40;
+
+    public SimuladorRobot(Consumer<String> logger) {
+        this.logger = logger;
+    }
 
     // Estado cinemático — coordenadas do professor (Xi, Yi, φ)
     private double xi = 0.0;
@@ -119,7 +126,7 @@ public class SimuladorRobot implements IRobot {
         return String.format("%.2f", v);
     }
 
-    private static void log(String msg) {
-        System.out.println("[SIMULADOR] " + msg);
+    private void log(String msg) {
+        logger.accept("[SIMULADOR] " + msg);
     }
 }
