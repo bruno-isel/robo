@@ -100,7 +100,7 @@ public class GUI_TP2 extends JFrame {
 
         // ── botões de movimento (TP1) ────────────────────────────────────────
         JButtton_Frente = botao("Frente", new Color(128, 255, 0));
-        JButtton_Frente.setBounds(170, 65, 90, 40);
+        JButtton_Frente.setBounds(170, 65, 90, 45);
         JButtton_Frente.addActionListener(e -> {
             double dist = parseDouble(textField_Distancia, dados.getDistancia());
             executarComando(() -> { robot.reta(dist); myPrint("Frente  dist=" + dist + " cm"); });
@@ -108,7 +108,7 @@ public class GUI_TP2 extends JFrame {
         contentPane.add(JButtton_Frente);
 
         JButtton_Esquerda = botao("Esquerda", new Color(0, 0, 255));
-        JButtton_Esquerda.setBounds(80, 107, 90, 40);
+        JButtton_Esquerda.setBounds(80, 112, 90, 45);
         JButtton_Esquerda.addActionListener(e -> {
             double r = parseDouble(textField_Raio,   dados.getRaio());
             double a = parseDouble(textField_Angulo, dados.getAngulo());
@@ -117,13 +117,13 @@ public class GUI_TP2 extends JFrame {
         contentPane.add(JButtton_Esquerda);
 
         JButtton_Parar = botao("Parar", new Color(255, 0, 0));
-        JButtton_Parar.setBounds(170, 107, 90, 40);
+        JButtton_Parar.setBounds(170, 112, 90, 45);
         JButtton_Parar.addActionListener(e ->
             executarComando(() -> { robot.parar(true); myPrint("Parar"); }));
         contentPane.add(JButtton_Parar);
 
         JButtton_Direita = botao("Direita", new Color(255, 220, 0));
-        JButtton_Direita.setBounds(259, 107, 90, 40);
+        JButtton_Direita.setBounds(259, 112, 90, 45);
         JButtton_Direita.addActionListener(e -> {
             double r = parseDouble(textField_Raio,   dados.getRaio());
             double a = parseDouble(textField_Angulo, dados.getAngulo());
@@ -132,7 +132,7 @@ public class GUI_TP2 extends JFrame {
         contentPane.add(JButtton_Direita);
 
         JButtton_Retaguarda = botao("Retaguarda", new Color(255, 0, 255));
-        JButtton_Retaguarda.setBounds(170, 149, 90, 40);
+        JButtton_Retaguarda.setBounds(170, 159, 90, 45);
         JButtton_Retaguarda.addActionListener(e -> {
             double dist = parseDouble(textField_Distancia, dados.getDistancia());
             executarComando(() -> { robot.recuar(dist); myPrint("Retaguarda  dist=" + dist + " cm"); });
@@ -145,7 +145,7 @@ public class GUI_TP2 extends JFrame {
             BorderFactory.createEtchedBorder(), "Ponto Objetivo  (Xf, Yf, φf)",
             TitledBorder.LEFT, TitledBorder.TOP,
             new Font("Times New Roman", Font.BOLD, 13)));
-        panelObjetivo.setBounds(10, 200, 440, 110);
+        panelObjetivo.setBounds(10, 213, 440, 110);
         contentPane.add(panelObjetivo);
 
         JLabel lbXf = new JLabel("Xf (cm)");
@@ -344,11 +344,10 @@ public class GUI_TP2 extends JFrame {
 
     private JButton botao(String texto, Color cor) {
         JButton b = new JButton(texto);
-        b.setUI(new javax.swing.plaf.basic.BasicButtonUI());
         b.setOpaque(true);
         b.setBackground(cor);
-        b.setForeground(Color.WHITE);
-        b.setFont(new Font("Times New Roman", Font.BOLD, 14));
+        b.setForeground(new Color(192, 192, 192));
+        b.setFont(new Font("Times New Roman", Font.PLAIN, 14));
         return b;
     }
 }
