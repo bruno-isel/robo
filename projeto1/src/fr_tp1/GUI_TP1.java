@@ -196,8 +196,8 @@ public class GUI_TP1 extends JFrame {
 
 		// Criado aqui para que o consumer possa aceder à textArea já inicializada
 		// Trocar a linha abaixo para usar o robot real via Bluetooth
-		robot = new SimuladorRobot(this::myPrintSempre);
-		// robot = new myRobotLego(this::myPrintSempre);
+		// robot = new SimuladorRobot(this::myPrintSempre);
+		robot = new myRobotLego(this::myPrintSempre);
 
 		aplicarDadosNoFormulario();
 	}
