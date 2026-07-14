@@ -8,10 +8,10 @@ import java.util.function.Consumer;
  * Sistema de coordenadas (conforme slides do professor):
  *   - Xi: eixo vertical (para cima) — direção inicial do robot
  *   - Yi: eixo horizontal (para a esquerda)
- *   - φ=0°  → robot aponta para Xi (cima)
- *   - φ=90° → robot aponta para Yi (esquerda)
- *   - curveLeft  → φ aumenta (anti-horário)
- *   - curveRight → φ diminui (horário)
+ *   - phi=0   -> robot aponta para Xi (cima)
+ *   - phi=90  -> robot aponta para Yi (esquerda)
+ *   - curveLeft  -> phi aumenta (anti-horario)
+ *   - curveRight -> phi diminui (horario)
  */
 public class SimuladorRobot implements IRobot {
 
@@ -24,10 +24,10 @@ public class SimuladorRobot implements IRobot {
         this.logger = logger;
     }
 
-    // Estado cinemático — coordenadas do professor (Xi, Yi, φ)
+    // Estado cinematico - coordenadas do professor (Xi, Yi, phi)
     private double xi = 0.0;
     private double yi = 0.0;
-    private double phi = 0.0; // graus: 0=Xi(cima), 90=Yi(esquerda)
+    private double phi = 0.0; // graus: 0=Xi(cima), 90=Yi(esquerda) - phi em graus
 
     @Override
     public boolean ligar(String nome) {
@@ -35,7 +35,7 @@ public class SimuladorRobot implements IRobot {
         this.ligado = true;
         xi = 0; yi = 0; phi = 0;
         log("Ligado ao robot: " + nome);
-        log("Posição inicial: Xi=0.00  Yi=0.00  φ=0.00°  (a apontar para Xi)");
+        log("Posicao inicial: Xi=0.00  Yi=0.00  phi=0.00 graus  (a apontar para Xi)");
         return true;
     }
 
@@ -66,10 +66,10 @@ public class SimuladorRobot implements IRobot {
     @Override
     public void curvarEsquerda(double raio, double angulo) {
         if (!verificar()) return;
-        double θ = Math.toRadians(phi);
-        double α = Math.toRadians(angulo);
-        xi += raio * (Math.sin(θ + α) - Math.sin(θ));
-        yi += raio * (Math.cos(θ) - Math.cos(θ + α));
+        double phiRad = Math.toRadians(phi);
+        double anguloRad = Math.toRadians(angulo);
+        xi += raio * (Math.sin(phiRad + anguloRad) - Math.sin(phiRad));
+        yi += raio * (Math.cos(phiRad) - Math.cos(phiRad + anguloRad));
         phi = normalizarPhi(phi + angulo);
         log("curveLeft(" + fmt(raio) + ", " + fmt(angulo) + ")  →  " + pos());
     }
@@ -77,12 +77,11 @@ public class SimuladorRobot implements IRobot {
     @Override
     public void curvarDireita(double raio, double angulo) {
         if (!verificar()) return;
-        double θ = Math.toRadians(phi);
-        double α = Math.toRadians(angulo);
+        double phiRad = Math.toRadians(phi);
+        double anguloRad = Math.toRadians(angulo);
         // Centro do arco: perpendicular à direita do robot
-        // c = (xi + r*sin(θ), yi - r*cos(θ))
-        xi += raio * (Math.sin(θ) - Math.sin(θ - α));
-        yi += raio * (Math.cos(θ - α) - Math.cos(θ));
+        xi += raio * (Math.sin(phiRad) - Math.sin(phiRad - anguloRad));
+        yi += raio * (Math.cos(phiRad - anguloRad) - Math.cos(phiRad));
         phi = normalizarPhi(phi - angulo);
         log("curveRight(" + fmt(raio) + ", " + fmt(angulo) + ")  →  " + pos());
     }
@@ -105,7 +104,7 @@ public class SimuladorRobot implements IRobot {
     }
 
     private String pos() {
-        return "Xi=" + fmt(xi) + "  Yi=" + fmt(yi) + "  φ=" + fmt(phi) + "°";
+        return "Xi=" + fmt(xi) + "  Yi=" + fmt(yi) + "  phi=" + fmt(phi) + " graus";
     }
 
     private boolean verificar() {
@@ -116,10 +115,10 @@ public class SimuladorRobot implements IRobot {
         return true;
     }
 
-    // Normaliza φ para (-180°, 180°] — igual à convenção dos slides do professor
+    // Normaliza phi para (-180, 180] - igual a convencao dos slides do professor
     private static double normalizarPhi(double p) {
-        p = ((p % 360) + 360) % 360; // primeiro para [0°, 360°)
-        return p > 180 ? p - 360 : p; // depois para (-180°, 180°]
+        p = ((p % 360) + 360) % 360; // primeiro para [0, 360)
+        return p > 180 ? p - 360 : p; // depois para (-180, 180]
     }
 
     private static String fmt(double v) {

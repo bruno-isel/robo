@@ -1,28 +1,29 @@
 package fr_tp1;
 
 import interpretador.InterpretadorEV3;
+import java.util.function.Consumer;
 
 /**
- * Implementação real do robot EV3 usando InterpretadorEV3.
+ * Implementacao real do robot EV3 usando InterpretadorEV3.
  *
- * Parâmetros físicos do robot (configuração padrão EV3):
- *   - Diâmetro das rodas: 5.6 cm  →  circunferência ≈ 17.59 cm
- *   - Distância entre rodas (dbw): 9.5 cm
+ * Parametros fisicos do robot (conforme slide 01, pag. 9: rr=27.3mm, der=90mm):
+ *   - Raio das rodas: 2.73 cm
+ *   - Distancia entre rodas (DBW): 9.0 cm
  *   - Motor esquerdo: porta B  /  Motor direito: porta C
- *   - Velocidade base: 40% (≈ 14 cm/s)
+ *   - Velocidade base: 40%
  */
 public class myRobotLego implements IRobot {
 
-    private static final double WHEEL_DIAM   = 5.6;
-    private static final double DBW          = 9.5;
-    private static final double WHEEL_CIRC   = Math.PI * WHEEL_DIAM;
-    private static final double MAX_CM_PER_S = 720.0 * WHEEL_CIRC / 360.0;
+    private static final double WHEEL_RADIUS = 2.73;
+    private static final double DBW          = 9.0;
 
     private final InterpretadorEV3 ev3;
+    private final Consumer<String> guiLog;
     private boolean ligado = false;
     private int velocidade = 40;
 
-    public myRobotLego() {
+    public myRobotLego(Consumer<String> guiLog) {
+        this.guiLog = guiLog;
         ev3 = new InterpretadorEV3();
     }
 
@@ -30,10 +31,10 @@ public class myRobotLego implements IRobot {
     public boolean ligar(String nome) {
         ligado = ev3.OpenEV3(nome);
         if (ligado) {
-            System.out.println("[EV3] Ligado a: " + nome);
+            log("[EV3] Ligado a: " + nome);
             ev3.ResetAll();
         } else {
-            System.out.println("[EV3] Falha na ligação a: " + nome);
+            log("[EV3] Falha na ligacao a: " + nome);
         }
         return ligado;
     }
@@ -44,58 +45,60 @@ public class myRobotLego implements IRobot {
             ev3.Off(InterpretadorEV3.OUT_BC);
             ev3.CloseEV3();
             ligado = false;
-            System.out.println("[EV3] Desligado");
+            log("[EV3] Desligado");
         }
     }
 
     @Override
     public void reta(double distancia) {
         if (!verificar()) return;
-        long ms = tempoMs(distancia, velocidade);
-        System.out.println("[EV3] straight(" + distancia + ") → " + ms + " ms");
+        int graus = distanciaParaGraus(distancia);
+        log("[EV3] straight(" + distancia + " cm) -> " + graus + " graus de roda");
         ev3.OnFwd(InterpretadorEV3.OUT_BC, velocidade);
-        dormir(ms);
+        esperarRotacao(InterpretadorEV3.OUT_B, graus);
         ev3.Off(InterpretadorEV3.OUT_BC);
     }
 
     @Override
     public void recuar(double distancia) {
         if (!verificar()) return;
-        long ms = tempoMs(distancia, velocidade);
-        System.out.println("[EV3] Recuar(" + distancia + ") → " + ms + " ms");
+        int graus = distanciaParaGraus(distancia);
+        log("[EV3] Recuar(" + distancia + " cm) -> " + graus + " graus de roda");
         ev3.OnRev(InterpretadorEV3.OUT_BC, velocidade);
-        dormir(ms);
+        esperarRotacao(InterpretadorEV3.OUT_B, graus);
         ev3.Off(InterpretadorEV3.OUT_BC);
     }
 
     @Override
     public void curvarEsquerda(double raio, double angulo) {
         if (!verificar()) return;
+        // curva esquerda: roda direita (OUT_C) e exterior
         double raioExt = raio + DBW / 2;
         double raioInt = raio - DBW / 2;
         int velExt = velocidade;
         int velInt = (int) Math.round(velocidade * raioInt / raioExt);
-        long ms = tempoMs(raioExt * Math.toRadians(angulo), velExt);
-        System.out.println("[EV3] curveLeft(" + raio + ", " + angulo + ") → " + ms + " ms");
-        acionarCurva(InterpretadorEV3.OUT_C, velExt, InterpretadorEV3.OUT_B, velInt, ms);
+        int graus = arcParaGrausRoda(raioExt, angulo);
+        log("[EV3] curveLeft(" + raio + ", " + angulo + ") -> " + graus + " graus roda ext");
+        acionarCurva(InterpretadorEV3.OUT_C, velExt, InterpretadorEV3.OUT_B, velInt, graus);
     }
 
     @Override
     public void curvarDireita(double raio, double angulo) {
         if (!verificar()) return;
+        // curva direita: roda esquerda (OUT_B) e exterior
         double raioExt = raio + DBW / 2;
         double raioInt = raio - DBW / 2;
         int velExt = velocidade;
         int velInt = (int) Math.round(velocidade * raioInt / raioExt);
-        long ms = tempoMs(raioExt * Math.toRadians(angulo), velExt);
-        System.out.println("[EV3] curveRight(" + raio + ", " + angulo + ") → " + ms + " ms");
-        acionarCurva(InterpretadorEV3.OUT_B, velExt, InterpretadorEV3.OUT_C, velInt, ms);
+        int graus = arcParaGrausRoda(raioExt, angulo);
+        log("[EV3] curveRight(" + raio + ", " + angulo + ") -> " + graus + " graus roda ext");
+        acionarCurva(InterpretadorEV3.OUT_B, velExt, InterpretadorEV3.OUT_C, velInt, graus);
     }
 
     @Override
     public void parar(boolean travar) {
         if (!verificar()) return;
-        System.out.println("[EV3] Parar");
+        log("[EV3] Parar");
         if (travar)
             ev3.Off(InterpretadorEV3.OUT_BC);
         else
@@ -105,7 +108,7 @@ public class myRobotLego implements IRobot {
     @Override
     public void setVelocidade(int vel) {
         this.velocidade = Math.max(20, Math.min(80, vel));
-        System.out.println("[EV3] Velocidade: " + this.velocidade + "%");
+        log("[EV3] Velocidade: " + this.velocidade + "%");
     }
 
     @Override
@@ -113,7 +116,7 @@ public class myRobotLego implements IRobot {
         return ligado;
     }
 
-    private void acionarCurva(int motorExt, int velExt, int motorInt, int velInt, long ms) {
+    private void acionarCurva(int motorExt, int velExt, int motorInt, int velInt, int graus) {
         ev3.OnFwd(motorExt, velExt);
         if (velInt > 0)
             ev3.OnFwd(motorInt, velInt);
@@ -121,21 +124,42 @@ public class myRobotLego implements IRobot {
             ev3.OnRev(motorInt, -velInt);
         else
             ev3.Off(motorInt);
-        dormir(ms);
+        esperarRotacao(motorExt, graus);
         ev3.Off(InterpretadorEV3.OUT_BC);
     }
 
-    private long tempoMs(double distancia, int vel) {
-        double cmPerSec = (vel / 100.0) * MAX_CM_PER_S;
-        return (long) (distancia / cmPerSec * 1000);
+    // Converte distancia linear (cm) em graus de rotacao da roda
+    // graus = distancia / raio_roda * (180/pi)
+    private int distanciaParaGraus(double distancia) {
+        return (int) Math.round(distancia / WHEEL_RADIUS * (180.0 / Math.PI));
+    }
+
+    // Converte arco (raio em cm, angulo em graus) em graus de rotacao da roda
+    // arc = raio * toRadians(angulo)  |  graus = arc / raio_roda * (180/pi)
+    // simplifica para: raio * angulo / raio_roda  (os pi cancelam-se)
+    private int arcParaGrausRoda(double raio, double angulo) {
+        return (int) Math.round(raio * angulo / WHEEL_RADIUS);
+    }
+
+    // Espera ate a roda rodar o numero de graus alvo (abordagem do slide com RotationCount)
+    private void esperarRotacao(int port, int grausAlvo) {
+        int id = ev3.RotationCount(port);
+        while (Math.abs(ev3.RotationCount(port) - id) < grausAlvo) {
+            dormir(10);
+        }
     }
 
     private boolean verificar() {
         if (!ligado) {
-            System.out.println("[EV3] ERRO: robot não está ligado");
+            log("[EV3] ERRO: robot nao esta ligado");
             return false;
         }
         return true;
+    }
+
+    private void log(String msg) {
+        System.out.println(msg);
+        if (guiLog != null) guiLog.accept(msg);
     }
 
     private static void dormir(long ms) {

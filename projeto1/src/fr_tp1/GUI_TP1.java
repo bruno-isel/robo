@@ -77,7 +77,7 @@ public class GUI_TP1 extends JFrame {
 		chckbxDebug_1.setBounds(6, 346, 97, 23);
 		contentPane.add(chckbxDebug_1);
 
-		label_Angulo = new JLabel("    Ângulo");
+		label_Angulo = new JLabel("    Angulo");
 		label_Angulo.setFont(new Font("Times New Roman", Font.PLAIN, 14));
 		label_Angulo.setBounds(120, 42, 70, 16);
 		contentPane.add(label_Angulo);
@@ -92,7 +92,7 @@ public class GUI_TP1 extends JFrame {
 		textField_Raio.setBounds(69, 43, 50, 16);
 		contentPane.add(textField_Raio);
 
-		label_Distancia = new JLabel("    Distância");
+		label_Distancia = new JLabel("    Distancia");
 		label_Distancia.setFont(new Font("Times New Roman", Font.PLAIN, 14));
 		label_Distancia.setBounds(276, 45, 70, 14);
 		contentPane.add(label_Distancia);
@@ -123,7 +123,7 @@ public class GUI_TP1 extends JFrame {
 			double angulo = parseCampoDouble(textField_Angulo, dados.getAngulo());
 			executarComando(() -> {
 				robot.curvarEsquerda(raio, angulo);
-				myPrint("Esquerda  raio=" + raio + " ângulo=" + angulo + "°");
+				myPrint("Esquerda  raio=" + raio + " angulo=" + angulo + " graus");
 			});
 		});
 		contentPane.add(JButtton_Esquerda);
@@ -151,7 +151,7 @@ public class GUI_TP1 extends JFrame {
 			double angulo = parseCampoDouble(textField_Angulo, dados.getAngulo());
 			executarComando(() -> {
 				robot.curvarDireita(raio, angulo);
-				myPrint("Direita  raio=" + raio + " ângulo=" + angulo + "°");
+				myPrint("Direita  raio=" + raio + " angulo=" + angulo + " graus");
 			});
 		});
 		contentPane.add(JButtton_Direita);
@@ -166,7 +166,7 @@ public class GUI_TP1 extends JFrame {
 			double dist = parseCampoDouble(textField_Distancia, dados.getDistancia());
 			executarComando(() -> {
 				robot.reta(dist);
-				myPrint("Frente  distância=" + dist + " cm");
+				myPrint("Frente  distancia=" + dist + " cm");
 			});
 		});
 		contentPane.add(JButtton_Frente);
@@ -181,7 +181,7 @@ public class GUI_TP1 extends JFrame {
 			double dist = parseCampoDouble(textField_Distancia, dados.getDistancia());
 			executarComando(() -> {
 				robot.recuar(dist);
-				myPrint("Retaguarda  distância=" + dist + " cm");
+				myPrint("Retaguarda  distancia=" + dist + " cm");
 			});
 		});
 		contentPane.add(JButtton_Retaguarda);
@@ -195,9 +195,9 @@ public class GUI_TP1 extends JFrame {
 		scrollPane.setViewportView(textArea);
 
 		// Criado aqui para que o consumer possa aceder à textArea já inicializada
-		// Trocar por new myRobotLego() para usar o robot real via Bluetooth
+		// Trocar a linha abaixo para usar o robot real via Bluetooth
 		robot = new SimuladorRobot(this::myPrintSempre);
-		// robot = new myRobotLego();
+		// robot = new myRobotLego(this::myPrintSempre);
 
 		aplicarDadosNoFormulario();
 	}

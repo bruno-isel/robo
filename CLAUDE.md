@@ -70,7 +70,7 @@ Em Eclipse: adicionar os JARs de `lib/` ao **module path** (Build Path → Modul
 - `reta()` → `OnFwd(OUT_BC, vel)` + sleep calculado + `Off`
 - `curvarEsquerda/Direita()` → velocidades diferentes por roda (cinemática: raio ± dbw/2)
 - `parar(travar)` → `Off` (travagem) ou `Float` (livre)
-- Parâmetros físicos: diâmetro roda=5.6 cm, dbw=9.5 cm, vel_base=40%
+- Parâmetros físicos (conforme slides, cap. 1 pág. 9): raio roda=2.73 cm, dbw (der)=9.0 cm, vel_base=40%
 
 ### `GUI_TP1.java` — interface gráfica
 - On/Off: liga/desliga em SwingWorker (não bloqueia EDT)
