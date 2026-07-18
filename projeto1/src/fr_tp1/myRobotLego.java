@@ -54,7 +54,7 @@ public class myRobotLego implements IRobot {
         if (!verificar()) return;
         int graus = distanciaParaGraus(distancia);
         log("[EV3] straight(" + distancia + " cm) -> " + graus + " graus de roda");
-        ev3.OnFwd(InterpretadorEV3.OUT_BC, velocidade);
+        ev3.OnFwd(InterpretadorEV3.OUT_B, velocidade, InterpretadorEV3.OUT_C, velocidade);
         esperarRotacao(InterpretadorEV3.OUT_B, graus);
         ev3.Off(InterpretadorEV3.OUT_BC);
     }
@@ -64,7 +64,7 @@ public class myRobotLego implements IRobot {
         if (!verificar()) return;
         int graus = distanciaParaGraus(distancia);
         log("[EV3] Recuar(" + distancia + " cm) -> " + graus + " graus de roda");
-        ev3.OnRev(InterpretadorEV3.OUT_BC, velocidade);
+        ev3.OnRev(InterpretadorEV3.OUT_B, velocidade, InterpretadorEV3.OUT_C, velocidade);
         esperarRotacao(InterpretadorEV3.OUT_B, graus);
         ev3.Off(InterpretadorEV3.OUT_BC);
     }
@@ -121,7 +121,7 @@ public class myRobotLego implements IRobot {
         if (velInt > 0)
             ev3.OnFwd(motorInt, velInt);
         else if (velInt < 0)
-            ev3.OnRev(motorInt, -velInt);
+            ev3.OnRev(motorInt, velInt);
         else
             ev3.Off(motorInt);
         esperarRotacao(motorExt, graus);
