@@ -121,7 +121,7 @@ public class myRobotLego implements IRobot {
         if (velInt > 0)
             ev3.OnFwd(motorInt, velInt);
         else if (velInt < 0)
-            ev3.OnRev(motorInt, velInt);
+            ev3.OnRev(motorInt, -velInt);
         else
             ev3.Off(motorInt);
         esperarRotacao(motorExt, graus);
