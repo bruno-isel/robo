@@ -117,13 +117,12 @@ public class myRobotLego implements IRobot {
     }
 
     private void acionarCurva(int motorExt, int velExt, int motorInt, int velInt, int graus) {
-        ev3.OnFwd(motorExt, velExt);
-        if (velInt > 0)
-            ev3.OnFwd(motorInt, velInt);
-        else if (velInt < 0)
+        if (velInt >= 0) {
+            ev3.OnFwd(motorExt, velExt, motorInt, velInt);
+        } else {
+            ev3.OnFwd(motorExt, velExt);
             ev3.OnRev(motorInt, -velInt);
-        else
-            ev3.Off(motorInt);
+        }
         esperarRotacao(motorExt, graus);
         ev3.Off(InterpretadorEV3.OUT_BC);
     }
