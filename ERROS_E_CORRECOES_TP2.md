@@ -109,10 +109,27 @@ ev3.OnRev(InterpretadorEV3.OUT_B, velocidade, InterpretadorEV3.OUT_C, velocidade
 
 ---
 
+## 6. Trajetórias 2 e 3 sem segmento reto e sem raio prático
+
+**Sintoma:** testado com o exemplo do slide 05 (Trajetória 2: `Xf=70, Yf=40, φf=20`), a GUI calculou `curvaEsquerda(56.94, 51.79°)` + `curvaDireita(56.94, 31.79°)` — só 2 passos, sem `reta` no meio — quando o slide mostra 3 passos: `curveLeft(47.5, 39.32)`, `straight(33.68)`, `curveRight(47.5, 19.32)`. O raio também não batia certo (56.94 vs 47.5).
+
+**Causa:** `calcularT2T3()` tinha dois problemas:
+1. Nunca chamava `calcRaioPratico()` — usava sempre o raio **teórico** (o valor 56,94 é na verdade o raio teórico, que até bate certo com o slide "Theoretical Trajectory 2": `r=56,95`).
+2. A fórmula do ângulo assumia os dois arcos tangentes entre si (sem espaço para uma reta), quando na prática — com o raio menor (prático) — os arcos deixam de se tocar e é preciso um segmento reto a ligar os dois, exatamente como a Trajetória 1 já fazia.
+
+**Correção:** `calcularT2T3()` passa a: converter o raio teórico para prático (`calcRaioPratico`, a mesma função já usada por `tentarT1`), recalcular os centros dos dois arcos com esse raio prático, calcular a distância `d12` entre os centros, e obter o ângulo extra (`δ = arccos(rP/(d12/2))`) e o comprimento da reta (`dStraight = d12·sen(δ)`) que a ligam — replicando o método usado nos slides "Trajetória 2/3 Prática". Passos passam a ser `curvaEsquerda + reta + curvaDireita`.
+
+**Validação:** testado contra os 3 exemplos dos slides (04, 05, 06):
+- Trajetória 1 (regressão): inalterada, continua correta.
+- Trajetória 2: `curveLeft(47.50, 39.35°)`, `reta(33.64)`, `curveRight(47.50, 19.35°)` — praticamente idêntico ao slide (`47.5`, `39.32°`, `33.68`, `19.32°`).
+- Trajetória 3: estrutura correta (3 passos, raio prático calculado), mas o raio final (19.00) difere do slide (17.82) porque esse exemplo específico do slide usa `vrobot=30`, enquanto o código usa `V_ROBOT=40` fixo (o mesmo valor que já funciona bem na Trajetória 1/2) — diferença de parâmetro, não bug.
+
+---
+
 ## Estado atual
 
-Correções portadas do TP1 e commitadas, mais o fix do ponto 5 (confirmado em teste real: curvas OK, reta/recuar corrigido). Falta ainda:
-- [ ] Voltar a testar `Frente`/`Retaguarda` no robot real depois do fix do ponto 5
-- [ ] Testar Parar a meio de um movimento simples
+Correções portadas do TP1 e commitadas, mais os fixes dos pontos 5 e 6 (confirmados: curvas, reta/recuar e Trajetória 1 testados no robot real; Trajetórias 2/3 validadas por cálculo contra os slides). Falta ainda:
+- [ ] Testar Trajetória 2/3 no robot real (só a Trajetória 1 foi executada fisicamente até agora)
+- [ ] Testar Parar a meio de um movimento simples (`Frente`/`Retaguarda` isolados, fora de uma trajetória)
 - [ ] Corrigir a limitação do ponto 2: Parar durante uma trajetória multi-passo (`executarTrajetoria`) só interrompe o passo atual, não a sequência toda
 - [ ] Parte II do guião do TP2 (robot seguidor de parede com sonar + sensor de toque) — ainda não iniciada
