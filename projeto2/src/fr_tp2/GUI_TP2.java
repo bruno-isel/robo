@@ -227,8 +227,7 @@ public class GUI_TP2 extends JFrame {
         scrollPane.setViewportView(textArea);
 
         // robot criado após textArea estar pronto (o consumer referencia myPrintSempre)
-        // Trocar por new myRobotLego(this::myPrintSempre) quando o robot físico estiver disponível
-        robot = new SimuladorRobot(this::myPrintSempre);
+        robot = new myRobotLego(this::myPrintSempre);
 
         setBotoesMovimento(false);
         JButtton_Parar.setEnabled(false);

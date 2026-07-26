@@ -69,7 +69,7 @@ public class myRobotLego implements IRobot {
         iniciarMovimento();
         long ms = tempoMs(distancia, velocidade);
         log("[EV3] straight(" + distancia + ") → " + ms + " ms");
-        ev3.OnFwd(InterpretadorEV3.OUT_BC, velocidade);
+        ev3.OnFwd(InterpretadorEV3.OUT_B, velocidade, InterpretadorEV3.OUT_C, velocidade);
         dormir(ms);
         terminarMovimento();
     }
@@ -80,7 +80,7 @@ public class myRobotLego implements IRobot {
         iniciarMovimento();
         long ms = tempoMs(distancia, velocidade);
         log("[EV3] Recuar(" + distancia + ") → " + ms + " ms");
-        ev3.OnRev(InterpretadorEV3.OUT_BC, velocidade);
+        ev3.OnRev(InterpretadorEV3.OUT_B, velocidade, InterpretadorEV3.OUT_C, velocidade);
         dormir(ms);
         terminarMovimento();
     }
