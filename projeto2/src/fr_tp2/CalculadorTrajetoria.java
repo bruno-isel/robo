@@ -144,49 +144,58 @@ public class CalculadorTrajetoria {
 
         double a = 2 - 2 * cosP;
         double c = -(xf * xf + yf * yf);
-        double r;
+        double rT;
 
         if (Math.abs(a) < 1e-9) {
             // φf ≈ 0°: equação linear  b·r = −c
             double bLin = 4 * yf;
             if (Math.abs(bLin) < 1e-9) return null;
-            r = -c / bLin;
+            rT = -c / bLin;
         } else {
             double b    = 2 * yf * (1 + cosP) - 2 * xf * sinP;
             double disc = b * b - 4 * a * c;
             if (disc < 0) return null;
-            r = (-b + Math.sqrt(disc)) / (2 * a);
+            rT = (-b + Math.sqrt(disc)) / (2 * a);
         }
-        if (r <= 0) return null;
+        if (rT <= 0) return null;
 
-        // centro do arco final (curva direita), usando r teórico
-        double xc2 = xf + r * sinP;
-        double yc2 = yf - r * cosP;
-        double yc1 = r; // c1 = (0, r)
+        double rP = calcRaioPratico(rT);
 
-        double sinAlpha = Math.max(-1.0, Math.min(1.0, xc2 / (2 * r)));
-        double baseAlpha = Math.toDegrees(Math.asin(sinAlpha));
+        // centros dos dois arcos com raio prático (c1 = (0, rP))
+        double xc2 = xf + rP * sinP;
+        double yc2 = yf - rP * cosP;
+        double yc1 = rP;
+
+        double dx  = xc2;
+        double dy  = yc2 - yc1;
+        double d12 = Math.sqrt(dx * dx + dy * dy);
+        if (d12 < 2 * rP) return null; // raio prático demasiado grande para este ponto (arcos sobrepõem-se)
+
+        double delta      = Math.toDegrees(Math.acos(rP / (d12 / 2)));
+        double dStraight  = d12 * Math.sin(Math.toRadians(delta));
+        double baseAngulo = Math.toDegrees(Math.asin(Math.max(-1.0, Math.min(1.0, xc2 / d12))));
 
         double alpha;
         int    traj;
         if (yc2 < yc1) {
             // T2: yc2 < yc1
-            alpha = baseAlpha;
+            alpha = baseAngulo - delta;
             traj  = 2;
         } else {
             // T3: yc2 >= yc1 (φf negativo)
-            alpha = 180.0 - baseAlpha;
+            alpha = 180.0 - (baseAngulo + delta);
             traj  = 3;
         }
 
         double alphaDireita = alpha - phiGraus;
-        if (alphaDireita < 1e-3) return null;
+        if (alpha < 1e-3 || alphaDireita < 1e-3) return null;
 
         List<Passo> passos = new ArrayList<>();
-        passos.add(new Passo(TipoMovimento.CURVA_ESQ, r, alpha,        0));
-        passos.add(new Passo(TipoMovimento.CURVA_DIR, r, alphaDireita, 0));
+        passos.add(new Passo(TipoMovimento.CURVA_ESQ, rP, alpha,        0));
+        passos.add(new Passo(TipoMovimento.RETA,      0,  0,            dStraight));
+        passos.add(new Passo(TipoMovimento.CURVA_DIR, rP, alphaDireita, 0));
 
-        return new Resultado(traj, r, passos);
+        return new Resultado(traj, rP, passos);
     }
 
     // ── Raio teórico → raio prático ─────────────────────────────────────────
