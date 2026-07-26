@@ -70,6 +70,8 @@ private static void dormir(long ms) {
 
 **Limitação conhecida:** se o "Parar" for pressionado durante a execução de uma **trajetória completa** (`executarTrajetoria()`, vários passos calculados pelo `CalculadorTrajetoria`), a interrupção só para o passo atual — o ciclo `for` em `executarTrajetoria()` continua automaticamente para o próximo passo. Isto ainda não foi corrigido (ver "Estado atual" abaixo); no TP1 este caso não existe porque não há execução de sequências multi-passo.
 
+**Atualização (ver ponto 7):** este mecanismo de `Thread.interrupt()` foi entretanto substituído — deixou de ser necessário depois de se mudar o `myRobotLego` de `Thread.sleep` para `RotationCount` (ponto 7), passando a usar o mesmo mecanismo simples de flag do TP1.
+
 ---
 
 ## 3. `myRobotLego` sem ligação à consola da GUI
@@ -123,6 +125,18 @@ ev3.OnRev(InterpretadorEV3.OUT_B, velocidade, InterpretadorEV3.OUT_C, velocidade
 - Trajetória 1 (regressão): inalterada, continua correta.
 - Trajetória 2: `curveLeft(47.50, 39.35°)`, `reta(33.64)`, `curveRight(47.50, 19.35°)` — praticamente idêntico ao slide (`47.5`, `39.32°`, `33.68`, `19.32°`).
 - Trajetória 3: estrutura correta (3 passos, raio prático calculado), mas o raio final (19.00) difere do slide (17.82) porque esse exemplo específico do slide usa `vrobot=30`, enquanto o código usa `V_ROBOT=40` fixo (o mesmo valor que já funciona bem na Trajetória 1/2) — diferença de parâmetro, não bug.
+
+---
+
+## 7. `myRobotLego` movido de `Thread.sleep` (tempo) para `RotationCount` (rotação real da roda)
+
+**Contexto:** o `myRobotLego` original do TP2 controlava o movimento por **tempo estimado**: calculava quantos `ms` o motor precisaria de rodar a uma dada velocidade para percorrer a distância/arco pretendido, e simplesmente esperava esse tempo (`Thread.sleep(ms)`) antes de desligar o motor. Isto assume velocidade constante e execução perfeita — não há nenhuma confirmação de que a roda rodou mesmo o que devia (arranques mais lentos, atrito, variação de bateria, etc. não são compensados). Note-se que isto **não vinha do `SimuladorRobot`** — o simulador nem sequer usa `Thread.sleep` (é cálculo instantâneo); era só a abordagem original escolhida para o robot real.
+
+O TP1 usa uma abordagem mais precisa desde o início: em vez de tempo, usa os **encoders dos motores** (`ev3.RotationCount(porta)`) — calcula quantos **graus a roda tem de rodar** e fica em polling a perguntar ao robot até confirmar que rodou mesmo esse número de graus.
+
+**Mudança:** o `myRobotLego` do TP2 foi atualizado para usar o mesmo mecanismo do TP1 (`RotationCount` + polling em `esperarRotacao`), tornando os dois projetos consistentes e o movimento mais fiel ao que o robot realmente percorre.
+
+**Efeito secundário — simplifica o Parar (ponto 2):** com o polling de volta, o mecanismo de interromper um movimento em curso deixou de precisar de `Thread.interrupt()` numa thread guardada (`threadMovimento`) — voltou a ser uma simples flag (`pedidoParar`) verificada a cada iteração do ciclo de polling, exatamente como no TP1. Mais simples e sem necessidade de gerir referências a threads.
 
 ---
 
