@@ -88,9 +88,31 @@ Mesmo problema e mesma correção do TP1 (ver ponto 6 do documento do TP1) — `
 
 ---
 
+## 5. `reta()`/`recuar()` falhavam com "Identificação do motor ilegal!"
+
+**Sintoma:** testado no robot real com a trajetória do slide 04 (`Xf=70, Yf=40, φf=70` → `curveLeft, straight, curveLeft`), as duas curvas executaram-se sempre corretamente, mas o passo `straight` (e também `Retaguarda`) falhava sempre com o erro da própria biblioteca:
+```
+OnFWD(motor, vel)- Erro: Identificação do motor ilegal!
+OnRev(motor, vel)- Erro: Identificação do motor ilegal!
+```
+Os botões "Frente"/"Retaguarda" pareciam não fazer nada.
+
+**Causa:** `reta()` e `recuar()` chamavam `ev3.OnFwd(OUT_BC, vel)` / `ev3.OnRev(OUT_BC, vel)` — a versão de **2 argumentos**, com o bitmask combinado `OUT_BC` a identificar as duas rodas de uma vez. Esta forma nunca tinha sido confirmada como funcional; só a versão de **4 argumentos** com portas individuais (`OnFwd(OUT_B, vel, OUT_C, vel)`) estava validada — é a que o TP1 usa desde o início, e a que já corrigimos nas curvas do TP2 (ponto 1). O `InterpretadorEV3` rejeita o bitmask combinado nesta chamada como "motor ilegal".
+
+**Correção:**
+```java
+ev3.OnFwd(InterpretadorEV3.OUT_B, velocidade, InterpretadorEV3.OUT_C, velocidade);
+...
+ev3.OnRev(InterpretadorEV3.OUT_B, velocidade, InterpretadorEV3.OUT_C, velocidade);
+```
+(`ev3.Off(OUT_BC)` continua a usar o bitmask combinado sem problema — só `OnFwd`/`OnRev` de 2 argumentos é que falha.)
+
+---
+
 ## Estado atual
 
-Correções portadas do TP1 e commitadas. Falta ainda:
-- [ ] Testar no robot real: curvas, Parar a meio de um movimento simples, On/Off
+Correções portadas do TP1 e commitadas, mais o fix do ponto 5 (confirmado em teste real: curvas OK, reta/recuar corrigido). Falta ainda:
+- [ ] Voltar a testar `Frente`/`Retaguarda` no robot real depois do fix do ponto 5
+- [ ] Testar Parar a meio de um movimento simples
 - [ ] Corrigir a limitação do ponto 2: Parar durante uma trajetória multi-passo (`executarTrajetoria`) só interrompe o passo atual, não a sequência toda
 - [ ] Parte II do guião do TP2 (robot seguidor de parede com sonar + sensor de toque) — ainda não iniciada
