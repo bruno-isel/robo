@@ -118,8 +118,17 @@ public class GUI_TP2 extends JFrame {
 
         JButtton_Parar = botao("Parar", new Color(255, 0, 0));
         JButtton_Parar.setBounds(170, 112, 90, 45);
-        JButtton_Parar.addActionListener(e ->
-            executarComando(() -> { robot.parar(true); myPrint("Parar"); }));
+        // Parar não passa por executarComando: tem de poder interromper um
+        // movimento em curso, por isso fica sempre ativo enquanto ligado
+        // (ver setBotoesMovimento) e corre diretamente na EDT.
+        JButtton_Parar.addActionListener(e -> {
+            if (!robot.isLigado()) {
+                myPrintSempre("Robot não está ligado. Use o botão On/Off.");
+                return;
+            }
+            robot.parar(true);
+            myPrint("Parar");
+        });
         contentPane.add(JButtton_Parar);
 
         JButtton_Direita = botao("Direita", new Color(255, 220, 0));
@@ -218,16 +227,21 @@ public class GUI_TP2 extends JFrame {
         scrollPane.setViewportView(textArea);
 
         // robot criado após textArea estar pronto (o consumer referencia myPrintSempre)
-        // Trocar por new myRobotLego() quando o robot físico estiver disponível
+        // Trocar por new myRobotLego(this::myPrintSempre) quando o robot físico estiver disponível
         robot = new SimuladorRobot(this::myPrintSempre);
 
         setBotoesMovimento(false);
+        JButtton_Parar.setEnabled(false);
     }
 
     // ── ligação Bluetooth ────────────────────────────────────────────────────
     private void toggleConexao() {
         String nome = textField_Robot.getText().trim();
         if (rdbtnOnoff.isSelected()) {
+            // Reverte o toggle visual imediato do clique: só fica "ligado"
+            // depois de robot.ligar() confirmar a ligação.
+            rdbtnOnoff.setSelected(false);
+            rdbtnOnoff.setEnabled(false);
             myPrintSempre("A ligar ao robot: " + nome + "...");
             new SwingWorker<Boolean, Void>() {
                 @Override protected Boolean doInBackground() { return robot.ligar(nome); }
@@ -237,10 +251,13 @@ public class GUI_TP2 extends JFrame {
                         rdbtnOnoff.setSelected(ok);
                         myPrintSempre(ok ? "Ligado a: " + nome : "Falha na ligação a: " + nome);
                         setBotoesMovimento(ok);
+                        JButtton_Parar.setEnabled(ok);
                         btnExecutar.setEnabled(ok && ultimaTrajetoria != null);
                     } catch (Exception ex) {
                         myPrintSempre("Erro: " + ex.getMessage());
                         rdbtnOnoff.setSelected(false);
+                    } finally {
+                        rdbtnOnoff.setEnabled(true);
                     }
                 }
             }.execute();
@@ -248,6 +265,7 @@ public class GUI_TP2 extends JFrame {
             robot.desligar();
             myPrintSempre("Desligado");
             setBotoesMovimento(false);
+            JButtton_Parar.setEnabled(false);
             btnExecutar.setEnabled(false);
         }
     }
@@ -316,12 +334,14 @@ public class GUI_TP2 extends JFrame {
         }.execute();
     }
 
+    // Nota: JButtton_Parar não está aqui de propósito - tem de continuar
+    // ativo mesmo com um movimento em curso (é o que o permite interromper),
+    // o seu estado é gerido separadamente em toggleConexao().
     private void setBotoesMovimento(boolean ativo) {
         JButtton_Frente.setEnabled(ativo);
         JButtton_Retaguarda.setEnabled(ativo);
         JButtton_Esquerda.setEnabled(ativo);
         JButtton_Direita.setEnabled(ativo);
-        JButtton_Parar.setEnabled(ativo);
     }
 
     // ── consola thread-safe ──────────────────────────────────────────────────
