@@ -205,6 +205,10 @@ public class GUI_TP1 extends JFrame {
 	private void toggleConexao() {
 		String nomeRobot = textField_Robot.getText().trim();
 		if (rdbtnOnoff.isSelected()) {
+			// Reverte o toggle visual imediato do clique: só fica "ligado"
+			// depois de robot.ligar() confirmar a ligação.
+			rdbtnOnoff.setSelected(false);
+			rdbtnOnoff.setEnabled(false);
 			myPrintSempre("A ligar ao robot: " + nomeRobot + "...");
 			new SwingWorker<Boolean, Void>() {
 				@Override protected Boolean doInBackground() {
@@ -219,6 +223,8 @@ public class GUI_TP1 extends JFrame {
 					} catch (Exception ex) {
 						myPrintSempre("Erro: " + ex.getMessage());
 						rdbtnOnoff.setSelected(false);
+					} finally {
+						rdbtnOnoff.setEnabled(true);
 					}
 				}
 			}.execute();
