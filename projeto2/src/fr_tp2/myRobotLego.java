@@ -68,7 +68,7 @@ public class myRobotLego implements IRobot {
         if (!verificar()) return;
         iniciarMovimento();
         long ms = tempoMs(distancia, velocidade);
-        log("[EV3] straight(" + distancia + ") → " + ms + " ms");
+        log(String.format("[EV3] straight(%.2f) → %d ms", distancia, ms));
         ev3.OnFwd(InterpretadorEV3.OUT_B, velocidade, InterpretadorEV3.OUT_C, velocidade);
         dormir(ms);
         terminarMovimento();
@@ -79,7 +79,7 @@ public class myRobotLego implements IRobot {
         if (!verificar()) return;
         iniciarMovimento();
         long ms = tempoMs(distancia, velocidade);
-        log("[EV3] Recuar(" + distancia + ") → " + ms + " ms");
+        log(String.format("[EV3] Recuar(%.2f) → %d ms", distancia, ms));
         ev3.OnRev(InterpretadorEV3.OUT_B, velocidade, InterpretadorEV3.OUT_C, velocidade);
         dormir(ms);
         terminarMovimento();
@@ -94,7 +94,7 @@ public class myRobotLego implements IRobot {
         int velExt = velocidade;
         int velInt = (int) Math.round(velocidade * raioInt / raioExt);
         long ms = tempoMs(raioExt * Math.toRadians(angulo), velExt);
-        log("[EV3] curveLeft(" + raio + ", " + angulo + ") → " + ms + " ms");
+        log(String.format("[EV3] curveLeft(%.2f, %.2f) → %d ms", raio, angulo, ms));
         acionarCurva(InterpretadorEV3.OUT_C, velExt, InterpretadorEV3.OUT_B, velInt, ms);
     }
 
@@ -107,7 +107,7 @@ public class myRobotLego implements IRobot {
         int velExt = velocidade;
         int velInt = (int) Math.round(velocidade * raioInt / raioExt);
         long ms = tempoMs(raioExt * Math.toRadians(angulo), velExt);
-        log("[EV3] curveRight(" + raio + ", " + angulo + ") → " + ms + " ms");
+        log(String.format("[EV3] curveRight(%.2f, %.2f) → %d ms", raio, angulo, ms));
         acionarCurva(InterpretadorEV3.OUT_B, velExt, InterpretadorEV3.OUT_C, velInt, ms);
     }
 
