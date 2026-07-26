@@ -22,6 +22,14 @@ public class myRobotLego implements IRobot {
     private boolean ligado = false;
     private int velocidade = 40;
 
+    // Usados para interromper um movimento em curso a partir do botao Parar,
+    // sem chamar ev3 a partir de duas threads ao mesmo tempo (exclusao mutua
+    // do InterpretadorEV3): quem chama ev3.Off/Float e sempre a thread do
+    // movimento em curso; parar() so define as flags quando ha movimento ativo.
+    private volatile boolean pedidoParar = false;
+    private volatile boolean travarAoParar = true;
+    private volatile boolean emMovimento = false;
+
     public myRobotLego(Consumer<String> guiLog) {
         this.guiLog = guiLog;
         ev3 = new InterpretadorEV3();
@@ -52,26 +60,29 @@ public class myRobotLego implements IRobot {
     @Override
     public void reta(double distancia) {
         if (!verificar()) return;
+        iniciarMovimento();
         int graus = distanciaParaGraus(distancia);
         log("[EV3] straight(" + distancia + " cm) -> " + graus + " graus de roda");
         ev3.OnFwd(InterpretadorEV3.OUT_B, velocidade, InterpretadorEV3.OUT_C, velocidade);
         esperarRotacao(InterpretadorEV3.OUT_B, graus);
-        ev3.Off(InterpretadorEV3.OUT_BC);
+        terminarMovimento();
     }
 
     @Override
     public void recuar(double distancia) {
         if (!verificar()) return;
+        iniciarMovimento();
         int graus = distanciaParaGraus(distancia);
         log("[EV3] Recuar(" + distancia + " cm) -> " + graus + " graus de roda");
         ev3.OnRev(InterpretadorEV3.OUT_B, velocidade, InterpretadorEV3.OUT_C, velocidade);
         esperarRotacao(InterpretadorEV3.OUT_B, graus);
-        ev3.Off(InterpretadorEV3.OUT_BC);
+        terminarMovimento();
     }
 
     @Override
     public void curvarEsquerda(double raio, double angulo) {
         if (!verificar()) return;
+        iniciarMovimento();
         // curva esquerda: roda direita (OUT_C) e exterior
         double raioExt = raio + DBW / 2;
         double raioInt = raio - DBW / 2;
@@ -85,6 +96,7 @@ public class myRobotLego implements IRobot {
     @Override
     public void curvarDireita(double raio, double angulo) {
         if (!verificar()) return;
+        iniciarMovimento();
         // curva direita: roda esquerda (OUT_B) e exterior
         double raioExt = raio + DBW / 2;
         double raioInt = raio - DBW / 2;
@@ -99,10 +111,15 @@ public class myRobotLego implements IRobot {
     public void parar(boolean travar) {
         if (!verificar()) return;
         log("[EV3] Parar");
-        if (travar)
-            ev3.Off(InterpretadorEV3.OUT_BC);
-        else
-            ev3.Float(InterpretadorEV3.OUT_BC);
+        travarAoParar = travar;
+        pedidoParar = true;
+        // Se ha um movimento em curso, e a thread desse movimento que chama
+        // ev3.Off/Float (assim que detetar pedidoParar em esperarRotacao) -
+        // nunca a partir daqui, para nao violar a exclusao mutua do ev3.
+        if (!emMovimento) {
+            if (travar) ev3.Off(InterpretadorEV3.OUT_BC);
+            else ev3.Float(InterpretadorEV3.OUT_BC);
+        }
     }
 
     @Override
@@ -124,7 +141,22 @@ public class myRobotLego implements IRobot {
             ev3.OnRev(motorInt, -velInt);
         }
         esperarRotacao(motorExt, graus);
-        ev3.Off(InterpretadorEV3.OUT_BC);
+        terminarMovimento();
+    }
+
+    // Marca inicio de um movimento: reset das flags de paragem pedida.
+    private void iniciarMovimento() {
+        pedidoParar = false;
+        travarAoParar = true;
+        emMovimento = true;
+    }
+
+    // Fim natural ou interrompido de um movimento: para os motores respeitando
+    // o modo pedido por parar() (travar/Off ou deixar andar livre/Float).
+    private void terminarMovimento() {
+        if (travarAoParar) ev3.Off(InterpretadorEV3.OUT_BC);
+        else ev3.Float(InterpretadorEV3.OUT_BC);
+        emMovimento = false;
     }
 
     // Converte distancia linear (cm) em graus de rotacao da roda
@@ -140,10 +172,11 @@ public class myRobotLego implements IRobot {
         return (int) Math.round(raio * angulo / WHEEL_RADIUS);
     }
 
-    // Espera ate a roda rodar o numero de graus alvo (abordagem do slide com RotationCount)
+    // Espera ate a roda rodar o numero de graus alvo (abordagem do slide com RotationCount),
+    // ou ate ser pedida uma paragem (botao Parar) - o que ocorrer primeiro.
     private void esperarRotacao(int port, int grausAlvo) {
         int id = ev3.RotationCount(port);
-        while (Math.abs(ev3.RotationCount(port) - id) < grausAlvo) {
+        while (!pedidoParar && Math.abs(ev3.RotationCount(port) - id) < grausAlvo) {
             dormir(10);
         }
     }

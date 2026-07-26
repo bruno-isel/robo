@@ -124,8 +124,23 @@ if (rdbtnOnoff.isSelected()) {
 
 ---
 
+## 7. Botão "Parar" não interrompia um movimento em curso
+
+**Sintoma:** ao carregar em "Parar" enquanto o robot estava a mover-se (ex: durante um `Frente` longo), nada acontecia — o botão parecia não fazer nada.
+
+**Causa:** `GUI_TP1.setBotoesMovimento(boolean ativo)` desativava **todos** os botões de movimento, incluindo o próprio `Parar`, assim que qualquer comando começava a correr (`executarComando()` chama `setBotoesMovimento(false)` no início). Ou seja, precisamente enquanto o robot se movia — quando faria sentido carregar em Parar — o botão estava desligado. Só voltava a ficar ativo quando o movimento terminava sozinho.
+
+Corrigir isto de forma ingénua (só reativar o botão) introduziria um novo problema: clicar em Parar durante um movimento lançaria uma *segunda* thread a chamar `ev3.Off(...)` ao mesmo tempo que a thread do movimento em curso está a fazer polling a `ev3.RotationCount(...)` — a mesma violação de exclusão mútua do ponto 5.
+
+**Correção:**
+- Em `GUI_TP1`: o botão `Parar` deixou de ser gerido por `setBotoesMovimento()`; passa a ficar sempre ativo enquanto o robot está ligado (ativado/desativado só em `toggleConexao()`), e o seu `ActionListener` chama `robot.parar(true)` diretamente na EDT, sem passar por `executarComando()`.
+- Em `myRobotLego`: adicionadas flags `volatile` (`pedidoParar`, `travarAoParar`, `emMovimento`). `esperarRotacao()` verifica `pedidoParar` a cada iteração do polling e sai do ciclo assim que for pedida uma paragem. `parar(travar)` **nunca** chama `ev3` diretamente se houver um movimento em curso — só define as flags; é sempre a thread do movimento (a única a "falar" com o `ev3` nesse momento) que efetivamente chama `Off`/`Float`, evitando qualquer acesso concorrente ao `ev3`.
+
+---
+
 ## Estado atual
 
 Todos os pontos acima estão corrigidos e commitados. Falta ainda testar no robot real:
 - [ ] Confirmar que as curvas movem o robot corretamente com o fix do `OnFwd` combinado
 - [ ] Confirmar visualmente que o botão On/Off só acende depois da confirmação de ligação
+- [ ] Confirmar que "Parar" interrompe mesmo um `Frente`/`Retaguarda`/curva em curso
