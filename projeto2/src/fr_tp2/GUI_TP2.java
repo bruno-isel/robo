@@ -23,14 +23,11 @@ public class GUI_TP2 extends JFrame {
 
     // ── componentes TP2 — ponto objetivo ────────────────────────────────────
     private JTextField textField_Xf, textField_Yf, textField_PhiF;
-    private JButton    btnCalcular, btnExecutar;
+    private JButton    btnCalcularExecutar;
 
     // ── modelo ───────────────────────────────────────────────────────────────
     private DadosGUI_TP1 dados;
     private IRobot        robot;
-
-    // última trajetória calculada (usada pelo botão Executar)
-    private CalculadorTrajetoria.Resultado ultimaTrajetoria = null;
 
     // ── arranque ─────────────────────────────────────────────────────────────
     public static void main(String[] args) {
@@ -184,26 +181,15 @@ public class GUI_TP2 extends JFrame {
         textField_PhiF.setBounds(330, 24, 55, 18);
         panelObjetivo.add(textField_PhiF);
 
-        btnCalcular = new JButton("Calcular Trajetória");
-        btnCalcular.setUI(new javax.swing.plaf.basic.BasicButtonUI());
-        btnCalcular.setBackground(new Color(255, 140, 0));
-        btnCalcular.setForeground(Color.WHITE);
-        btnCalcular.setOpaque(true);
-        btnCalcular.setFont(new Font("Times New Roman", Font.BOLD, 13));
-        btnCalcular.setBounds(10, 55, 185, 38);
-        btnCalcular.addActionListener(e -> calcularTrajetoria());
-        panelObjetivo.add(btnCalcular);
-
-        btnExecutar = new JButton("Executar");
-        btnExecutar.setUI(new javax.swing.plaf.basic.BasicButtonUI());
-        btnExecutar.setBackground(new Color(0, 160, 80));
-        btnExecutar.setForeground(Color.WHITE);
-        btnExecutar.setOpaque(true);
-        btnExecutar.setFont(new Font("Times New Roman", Font.BOLD, 13));
-        btnExecutar.setBounds(205, 55, 120, 38);
-        btnExecutar.setEnabled(false);
-        btnExecutar.addActionListener(e -> executarTrajetoria());
-        panelObjetivo.add(btnExecutar);
+        btnCalcularExecutar = new JButton("Calcular e Executar");
+        btnCalcularExecutar.setUI(new javax.swing.plaf.basic.BasicButtonUI());
+        btnCalcularExecutar.setBackground(new Color(0, 160, 80));
+        btnCalcularExecutar.setForeground(Color.WHITE);
+        btnCalcularExecutar.setOpaque(true);
+        btnCalcularExecutar.setFont(new Font("Times New Roman", Font.BOLD, 13));
+        btnCalcularExecutar.setBounds(10, 55, 315, 38);
+        btnCalcularExecutar.addActionListener(e -> calcularEExecutarTrajetoria());
+        panelObjetivo.add(btnCalcularExecutar);
 
         // ── Debug + Consola ──────────────────────────────────────────────────
         chckbxDebug = new JCheckBox("Debug");
@@ -251,7 +237,6 @@ public class GUI_TP2 extends JFrame {
                         myPrintSempre(ok ? "Ligado a: " + nome : "Falha na ligação a: " + nome);
                         setBotoesMovimento(ok);
                         JButtton_Parar.setEnabled(ok);
-                        btnExecutar.setEnabled(ok && ultimaTrajetoria != null);
                     } catch (Exception ex) {
                         myPrintSempre("Erro: " + ex.getMessage());
                         rdbtnOnoff.setSelected(false);
@@ -265,12 +250,11 @@ public class GUI_TP2 extends JFrame {
             myPrintSempre("Desligado");
             setBotoesMovimento(false);
             JButtton_Parar.setEnabled(false);
-            btnExecutar.setEnabled(false);
         }
     }
 
-    // ── calcular trajetória ──────────────────────────────────────────────────
-    private void calcularTrajetoria() {
+    // ── calcular e executar trajetória num só passo ──────────────────────────
+    private void calcularEExecutarTrajetoria() {
         double xf   = parseDouble(textField_Xf,   70.0);
         double yf   = parseDouble(textField_Yf,   40.0);
         double phiF = parseDouble(textField_PhiF, 70.0);
@@ -282,27 +266,24 @@ public class GUI_TP2 extends JFrame {
 
         if (res == null) {
             myPrintSempre("Ponto não atingível com as trajetórias suportadas.\n");
-            ultimaTrajetoria = null;
-            btnExecutar.setEnabled(false);
             return;
         }
 
-        ultimaTrajetoria = res;
         myPrintSempre(res.toConsola());
-        btnExecutar.setEnabled(robot.isLigado());
-    }
 
-    // ── executar trajetória calculada ────────────────────────────────────────
-    private void executarTrajetoria() {
-        if (ultimaTrajetoria == null || !robot.isLigado()) return;
-        myPrintSempre("A executar trajetória " + ultimaTrajetoria.trajetoria + "...");
+        if (!robot.isLigado()) {
+            myPrintSempre("Robot não está ligado — trajetória calculada mas não executada. Use o botão On/Off.");
+            return;
+        }
+
+        myPrintSempre("A executar trajetória " + res.trajetoria + "...");
         setBotoesMovimento(false);
-        btnExecutar.setEnabled(false);
+        btnCalcularExecutar.setEnabled(false);
 
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() {
-                for (CalculadorTrajetoria.Passo p : ultimaTrajetoria.passos) {
+                for (CalculadorTrajetoria.Passo p : res.passos) {
                     switch (p.tipo) {
                         case CURVA_ESQ: robot.curvarEsquerda(p.raio, p.angulo); break;
                         case CURVA_DIR: robot.curvarDireita(p.raio, p.angulo);  break;
@@ -315,7 +296,7 @@ public class GUI_TP2 extends JFrame {
             protected void done() {
                 myPrintSempre("Trajetória concluída.");
                 setBotoesMovimento(robot.isLigado());
-                btnExecutar.setEnabled(robot.isLigado() && ultimaTrajetoria != null);
+                btnCalcularExecutar.setEnabled(true);
             }
         }.execute();
     }

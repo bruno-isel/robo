@@ -57,17 +57,24 @@ public class CalculadorTrajetoria {
         public final int         trajetoria; // 1, 2 ou 3
         public final double      raio;
         public final List<Passo> passos;
+        public final boolean     espelhada; // true se obtida por espelhamento sobre o eixo X (yf < 0)
 
         Resultado(int trajetoria, double raio, List<Passo> passos) {
+            this(trajetoria, raio, passos, false);
+        }
+
+        Resultado(int trajetoria, double raio, List<Passo> passos, boolean espelhada) {
             this.trajetoria = trajetoria;
             this.raio       = raio;
             this.passos     = passos;
+            this.espelhada  = espelhada;
         }
 
         /** Texto multi-linha para apresentar na consola da GUI. */
         public String toConsola() {
+            String tag = espelhada ? "  [ESPELHADA — yf<0, curva inicial à direita]" : "";
             StringBuilder sb = new StringBuilder();
-            sb.append(String.format("── Trajetória %d  (r=%.2f cm) ──%n", trajetoria, raio));
+            sb.append(String.format("── Trajetória %d  (r=%.2f cm)%s ──%n", trajetoria, raio, tag));
             for (int i = 0; i < passos.size(); i++)
                 sb.append(String.format("  Passo %d: %s%n", i + 1, passos.get(i)));
             return sb.toString();
@@ -79,15 +86,37 @@ public class CalculadorTrajetoria {
     /**
      * Calcula a trajetória para (xf, yf, phiGraus).
      * Tenta T1 primeiro; se não for válida, usa T2 ou T3.
+     * Todas as trajetórias começam com curva para a esquerda; para yf < 0
+     * (ponto à direita do robot) resolve-se o problema espelhado sobre o
+     * eixo X e troca-se o sentido das curvas no resultado, cobrindo assim
+     * qualquer ponto do quadrante.
      * Retorna null se o ponto não for atingível.
      */
     public static Resultado calcular(double xf, double yf, double phiGraus) {
         if (xf <= 0) return null; // ponto atrás do robot
 
+        if (yf < 0) {
+            Resultado espelhado = calcular(xf, -yf, -phiGraus);
+            return espelhado == null ? null : espelhar(espelhado);
+        }
+
         Resultado r1 = tentarT1(xf, yf, phiGraus);
         if (r1 != null) return r1;
 
         return calcularT2T3(xf, yf, phiGraus);
+    }
+
+    // ── Espelhamento sobre o eixo X (troca o sentido das curvas) ────────────
+
+    private static Resultado espelhar(Resultado r) {
+        List<Passo> passos = new ArrayList<>(r.passos.size());
+        for (Passo p : r.passos) {
+            TipoMovimento tipo = p.tipo == TipoMovimento.CURVA_ESQ ? TipoMovimento.CURVA_DIR
+                                : p.tipo == TipoMovimento.CURVA_DIR ? TipoMovimento.CURVA_ESQ
+                                : p.tipo; // RETA mantém-se
+            passos.add(new Passo(tipo, p.raio, p.angulo, p.distancia));
+        }
+        return new Resultado(r.trajetoria, r.raio, passos, true);
     }
 
     // ── Trajetória 1: curvaEsq + reta + curvaEsq ────────────────────────────
