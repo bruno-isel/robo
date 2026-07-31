@@ -42,7 +42,24 @@ public class myRobotLego implements IRobot {
 
     @Override
     public boolean ligar(String nome) {
-        ligado = ev3.OpenEV3(nome);
+        // O InterpretadorEV3 imprime os passos da procura/ligação Bluetooth
+        // (ex: "Dispositivo bluetooth X encontrado/não encontrado.") direto
+        // para System.out, sem passar pelo guiLog - por isso só apareciam no
+        // Console do Eclipse. Redireciona System.out temporariamente para que
+        // essas linhas também apareçam na consola da GUI.
+        java.io.PrintStream original = System.out;
+        java.io.PrintStream comGuiLog = new java.io.PrintStream(original) {
+            @Override public void println(String x) {
+                original.println(x);
+                if (guiLog != null) guiLog.accept(x);
+            }
+        };
+        System.setOut(comGuiLog);
+        try {
+            ligado = ev3.OpenEV3(nome);
+        } finally {
+            System.setOut(original);
+        }
         if (ligado) {
             log("[EV3] Ligado a: " + nome);
             ev3.ResetAll();
