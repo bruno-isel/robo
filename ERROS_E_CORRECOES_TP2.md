@@ -140,6 +140,31 @@ O TP1 usa uma abordagem mais precisa desde o início: em vez de tempo, usa os **
 
 ---
 
+## 8. `[EV3] Falha na ligação a: EVA` — robot ligado, emparelhado e Bluetooth ativo
+
+**Sintoma:** ao clicar On/Off na GUI com o nome "EVA" (e também testado com "eva" e outro nome), a ligação falha sempre — `myRobotLego.ligar()` reporta `[EV3] Falha na ligação a: EVA`. Confirmado que o robot está ligado, emparelhado no Windows e com o Bluetooth ativo no ecrã do EV3. O nome do robot não foi alterado depois de emparelhado.
+
+**Investigação:** descompilado `InterpretadorEV32026.jar` e `bluecove-2.1.1-SNAPSHOT.jar` (`javap -c`) para perceber o que `ligar()` → `ev3.OpenEV3(nome)` faz internamente:
+1. `ProcuraDeviceRemoto(nome)` pede ao `DiscoveryAgent` a lista de dispositivos **já emparelhados** (nesta versão do bluecove, `PREKNOWN = 1`, ao contrário da spec JSR-82 standard onde seria `CACHED`) — não faz inquiry/scan ao vivo.
+2. Compara o nome de cada dispositivo dessa lista com o texto do campo "Robot" usando `String.equals()` — comparação exata, sensível a maiúsculas/minúsculas e a espaços invisíveis.
+3. Só se encontrar uma correspondência exata é que tenta `Open()` (liga o canal RFCOMM/SPP `btspp://<endereço>:1`).
+
+A biblioteca imprime também, diretamente para `System.out` (não para a consola da GUI, mas visível na aba **Console do Eclipse**), mensagens adicionais que isolam onde a falha ocorre:
+- `Dispositivo bluetooth <nome> não encontrado.` → falha no passo 1/2 (o Windows/bluecove não devolveu o dispositivo com esse nome exato na lista de emparelhados).
+- `Dispositivo bluetooth <nome> encontrado.` seguido de `Insucesso no estabelecimento do canal de comunicação` ou `Erro na abertura das streams` → o dispositivo foi encontrado, mas o canal RFCOMM em si não abriu.
+
+**Checklist de troubleshooting (por ordem de probabilidade):**
+- [ ] Verificar a aba **Console do Eclipse** (não a caixa de texto da GUI) para ver qual das duas mensagens acima aparece — isto distingue "não encontrado" de "encontrado mas falha o canal".
+- [ ] Confirmar o nome exato em **Definições → Bluetooth e dispositivos** do Windows (copiar/colar para a GUI, para evitar espaços ou diferenças de maiúsculas invisíveis).
+- [ ] Se o nome bater certo mas continuar "não encontrado": esquecer o dispositivo no Windows e voltar a emparelhar do zero (o Windows guarda o nome/estado do momento do emparelhamento; um emparelhamento antigo ou incompleto pode não aparecer corretamente na lista PREKNOWN que o bluecove lê).
+- [ ] Se aparecer "encontrado" mas o canal falhar: confirmar que não há **outra aplicação** (ou outra instância da GUI) já ligada ao robot — o EV3 só aceita uma ligação RFCOMM de cada vez — e que o robot não está em standby/suspenso.
+- [ ] Correr o Eclipse como Administrador — o `bluecove` (2011, pensado para Windows XP/7) por vezes precisa de privilégios elevados para aceder à API de Bluetooth em Windows 10/11.
+- [ ] Confirmar que o emparelhamento foi feito com PIN clássico (Bluetooth Classic/SPP), não via "Adicionar dispositivo" rápido (Swift Pair) que por vezes não regista o serviço SPP necessário para o `InterpretadorEV3`.
+
+**Estado:** não resolvido — falta o utilizador verificar a aba Console do Eclipse para confirmar qual das duas mensagens aparece e seguir o checklist a partir daí.
+
+---
+
 ## Estado atual
 
 Correções portadas do TP1 e commitadas, mais os fixes dos pontos 5 e 6 (confirmados: curvas, reta/recuar e Trajetória 1 testados no robot real; Trajetórias 2/3 validadas por cálculo contra os slides). Falta ainda:
